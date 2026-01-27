@@ -40,4 +40,8 @@ public class Session {
 
     @OneToOne(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
     private PurchaseList purchaseList;
+
+    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<GroupEvent> groupEvents = new ArrayList<>();
 }

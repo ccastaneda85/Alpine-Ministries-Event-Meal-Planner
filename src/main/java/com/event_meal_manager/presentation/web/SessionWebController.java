@@ -34,6 +34,7 @@ public class SessionWebController {
     public String viewSession(@PathVariable Long id, Model model) {
         Session sess = sessionService.getSessionById(id);
         model.addAttribute("sess", sess);
+        model.addAttribute("groups", sess.getGroupEvents());
         return "sessions/view";
     }
 

@@ -35,6 +35,11 @@ public class GroupEvent {
     @JsonIgnore
     private Group group;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "session_id", nullable = false)
+    @JsonIgnore
+    private Session session;
+
     @Column(nullable = false)
     private LocalDate arrivalDate;
 

@@ -2,8 +2,10 @@ package com.event_meal_manager.application.session;
 
 import com.event_meal_manager.domain.session.Group;
 import com.event_meal_manager.domain.session.GroupEvent;
+import com.event_meal_manager.domain.session.Session;
 import com.event_meal_manager.infrastructure.persistence.session.GroupEventRepository;
 import com.event_meal_manager.infrastructure.persistence.session.GroupRepository;
+import com.event_meal_manager.infrastructure.persistence.session.SessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,7 @@ public class GroupEventService {
 
     private final GroupEventRepository groupEventRepository;
     private final GroupRepository groupRepository;
+    private final SessionRepository sessionRepository;
     private final DayService dayService;
 
     public GroupEvent createGroupEvent(Long groupId, LocalDate arrivalDate, LocalDate departureDate,
@@ -31,6 +34,37 @@ public class GroupEventService {
 
         GroupEvent groupEvent = GroupEvent.builder()
                 .group(group)
+                .arrivalDate(arrivalDate)
+                .departureDate(departureDate)
+                .adultCount(adultCount)
+                .youthCount(youthCount)
+                .kidCount(kidCount)
+                .build();
+
+        groupEvent = groupEventRepository.save(groupEvent);
+
+        // Create days for the date range if they don't exist
+        dayService.findOrCreateDaysInRange(arrivalDate, departureDate);
+
+        return groupEvent;
+    }
+
+    public GroupEvent createGroupEventForSession(Long sessionId, String groupName, LocalDate arrivalDate,
+                                                  LocalDate departureDate, int adultCount, int youthCount, int kidCount) {
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not found with id: " + sessionId));
+
+        // Find or create the group by name
+        Group group = groupRepository.findByName(groupName)
+                .orElseGet(() -> groupRepository.save(Group.builder().name(groupName).build()));
+
+        if (arrivalDate.isAfter(departureDate)) {
+            throw new RuntimeException("Arrival date cannot be after departure date");
+        }
+
+        GroupEvent groupEvent = GroupEvent.builder()
+                .group(group)
+                .session(session)
                 .arrivalDate(arrivalDate)
                 .departureDate(departureDate)
                 .adultCount(adultCount)

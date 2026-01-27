@@ -1,7 +1,9 @@
 package com.event_meal_manager.presentation.session;
 
+import com.event_meal_manager.application.session.GroupEventService;
 import com.event_meal_manager.application.session.SessionService;
 import com.event_meal_manager.domain.session.Day;
+import com.event_meal_manager.domain.session.GroupEvent;
 import com.event_meal_manager.domain.session.Session;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,7 @@ import java.util.List;
 public class SessionController {
 
     private final SessionService sessionService;
+    private final GroupEventService groupEventService;
 
     @PostMapping
     public ResponseEntity<Session> createSession(@RequestBody CreateSessionRequest request) {
@@ -65,5 +68,24 @@ public class SessionController {
         return ResponseEntity.ok(days);
     }
 
+    @PostMapping("/{id}/groups")
+    public ResponseEntity<GroupEvent> addGroupToSession(
+            @PathVariable Long id,
+            @RequestBody AddGroupRequest request) {
+        GroupEvent groupEvent = groupEventService.createGroupEventForSession(
+                id,
+                request.groupName(),
+                request.arrivalDate(),
+                request.departureDate(),
+                request.adultCount(),
+                request.youthCount(),
+                request.kidCount()
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(groupEvent);
+    }
+
     record CreateSessionRequest(String name, LocalDate startDate, LocalDate endDate) {}
+
+    record AddGroupRequest(String groupName, LocalDate arrivalDate, LocalDate departureDate,
+                           int adultCount, int youthCount, int kidCount) {}
 }

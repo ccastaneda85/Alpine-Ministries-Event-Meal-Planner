@@ -49,10 +49,10 @@
                                 <td th:text="${#temporals.format(sess.endDate, 'MMM dd, yyyy')}">Jun 20, 2025</td>
                                 <td th:text="${sess.days.size()} + ' days'">6 days</td>
                                 <td>
-                                    <a th:href="@{/sessions/{id}(id=${sess.sessionId})}" class="btn btn-sm btn-secondary">View</a>
-                                    <a th:href="@{/sessions/{id}/edit(id=${sess.sessionId})}" class="btn btn-sm btn-secondary">Edit</a>
+                                    <a th:href="@{/sessions/{id}(id=${sess.id})}" class="btn btn-sm btn-secondary">View</a>
+                                    <a th:href="@{/sessions/{id}/edit(id=${sess.id})}" class="btn btn-sm btn-secondary">Edit</a>
                                     <button class="btn btn-sm btn-danger"
-                                            th:onclick="'deleteSession(' + ${sess.sessionId} + ')'">Delete</button>
+                                            th:onclick="'deleteSession(' + ${sess.id} + ')'">Delete</button>
                                 </td>
                             </tr>
                         </tbody>

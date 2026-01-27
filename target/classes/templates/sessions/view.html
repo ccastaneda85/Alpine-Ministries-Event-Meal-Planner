@@ -43,10 +43,10 @@
                     <button class="btn btn-sm btn-primary" onclick="showAddGroupModal()">Add Group</button>
                 </div>
                 <div class="card-body">
-                    <div th:if="${sess.groups.isEmpty()}" class="empty-state">
+                    <div th:if="${groups.isEmpty()}" class="empty-state">
                         <p>No groups added yet. Add groups attending this retreat.</p>
                     </div>
-                    <table th:unless="${sess.groups.isEmpty()}" class="table">
+                    <table th:unless="${groups.isEmpty()}" class="table">
                         <thead>
                             <tr>
                                 <th>Group Name</th>
@@ -59,8 +59,8 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="group : ${sess.groups}">
-                                <td th:text="${group.groupName}">Church Group</td>
+                            <tr th:each="group : ${groups}">
+                                <td th:text="${group.group.name}">Church Group</td>
                                 <td th:text="${group.adultCount}">15</td>
                                 <td th:text="${group.youthCount}">10</td>
                                 <td th:text="${group.kidCount}">5</td>
@@ -166,7 +166,7 @@
 
     <script th:src="@{/js/main.js}"></script>
     <script th:inline="javascript">
-        const sessionId = /*[[${sess.sessionId}]]*/ 0;
+        const sessionId = /*[[${sess.id}]]*/ 0;
         let currentMealPeriodId = null;
 
         function showAddGroupModal() {
