@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase List - Retreat Meal Manager</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a th:href="@{/}">Retreat Meal Manager</a>
+        </div>
+        <ul class="nav-menu">
+            <li><a th:href="@{/}">Home</a></li>
+            <li><a th:href="@{/sessions}">Sessions</a></li>
+            <li><a th:href="@{/menus}">Menus</a></li>
+            <li><a th:href="@{/menus/ingredients}">Ingredients</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <main>
+            <div class="page-header">
+                <h1>Purchase List</h1>
+                <div>
+                    <button th:if="${purchaseList == null}"
+                            class="btn btn-primary"
+                            th:onclick="'generatePurchaseList(' + ${sessionId} + ')'">
+                        Generate Purchase List
+                    </button>
+                    <button th:if="${purchaseList != null}"
+                            class="btn btn-primary"
+                            th:onclick="'generatePurchaseList(' + ${sessionId} + ')'">
+                        Regenerate
+                    </button>
+                    <button th:if="${purchaseList != null}"
+                            class="btn btn-secondary"
+                            onclick="window.print()">
+                        Print
+                    </button>
+                </div>
+            </div>
+
+            <div th:if="${error}" class="alert alert-warning">
+                <p th:text="${error}">Error message</p>
+                <button class="btn btn-primary" th:onclick="'generatePurchaseList(' + ${sessionId} + ')'">
+                    Generate Purchase List
+                </button>
+            </div>
+
+            <div th:if="${purchaseList != null}">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Purchase List Details</h2>
+                        <div class="status-badge" th:classappend="${'status-' + ${purchaseList.status}}">
+                            <span th:text="${purchaseList.status}">DRAFT</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Generated:</strong> <span th:text="${#temporals.format(purchaseList.generatedAt, 'MMM dd, yyyy HH:mm')}"></span></p>
+                        <p th:if="${purchaseList.notes}"><strong>Notes:</strong> <span th:text="${purchaseList.notes}"></span></p>
+
+                        <div class="status-actions">
+                            <label for="status">Update Status:</label>
+                            <select id="status" th:value="${purchaseList.status}">
+                                <option value="DRAFT" th:selected="${purchaseList.status.name() == 'DRAFT'}">Draft</option>
+                                <option value="PENDING" th:selected="${purchaseList.status.name() == 'PENDING'}">Pending</option>
+                                <option value="ORDERED" th:selected="${purchaseList.status.name() == 'ORDERED'}">Ordered</option>
+                                <option value="COMPLETED" th:selected="${purchaseList.status.name() == 'COMPLETED'}">Completed</option>
+                            </select>
+                            <button class="btn btn-sm btn-primary"
+                                    th:onclick="'updateStatus(' + ${purchaseList.purchaseListId} + ')'">
+                                Update Status
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Items to Purchase</h2>
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Ingredient</th>
+                                    <th>Quantity</th>
+                                    <th>Unit</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="item : ${purchaseList.items}">
+                                    <td th:text="${item.notes}">Ingredient</td>
+                                    <td th:text="${#numbers.formatDecimal(item.quantity, 1, 2)}">10.5</td>
+                                    <td th:text="${item.uom}">lbs</td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 Retreat Meal Manager</p>
+    </footer>
+
+    <script th:src="@{/js/main.js}"></script>
+    <script>
+        function generatePurchaseList(sessionId) {
+            fetch(`/api/purchaselists/session/${sessionId}`, {
+                method: 'POST'
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Failed to generate purchase list');
+                }
+            });
+        }
+
+        function updateStatus(purchaseListId) {
+            const status = document.getElementById('status').value;
+
+            fetch(`/api/purchaselists/${purchaseListId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: status })
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Failed to update status');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Ingredient - Retreat Meal Manager</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a th:href="@{/}">Retreat Meal Manager</a>
+        </div>
+        <ul class="nav-menu">
+            <li><a th:href="@{/}">Home</a></li>
+            <li><a th:href="@{/sessions}">Sessions</a></li>
+            <li><a th:href="@{/menus}">Menus</a></li>
+            <li><a th:href="@{/menus/ingredients}" class="active">Ingredients</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <main>
+            <div class="page-header">
+                <h1>Create New Ingredient</h1>
+            </div>
+
+            <div class="form-container">
+                <form id="ingredientForm" class="form">
+                    <div class="form-group">
+                        <label for="name">Ingredient Name</label>
+                        <input type="text" id="name" name="name" required
+                               placeholder="e.g., Flour, Milk, Eggs">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="unitOfMeasure">Unit of Measure</label>
+                        <input type="text" id="unitOfMeasure" name="unitOfMeasure" required
+                               placeholder="e.g., cups, oz, lbs, count">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="adultPortion">Adult Portion</label>
+                            <input type="number" step="0.1" id="adultPortion" name="adultPortion" required
+                                   placeholder="e.g., 2.0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="youthPortion">Youth Portion</label>
+                            <input type="number" step="0.1" id="youthPortion" name="youthPortion" required
+                                   placeholder="e.g., 1.5">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="kidPortion">Kid Portion</label>
+                            <input type="number" step="0.1" id="kidPortion" name="kidPortion" required
+                                   placeholder="e.g., 1.0">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Create Ingredient</button>
+                        <a th:href="@{/menus/ingredients}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 Retreat Meal Manager</p>
+    </footer>
+
+    <script th:src="@{/js/main.js}"></script>
+    <script>
+        document.getElementById('ingredientForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = {
+                name: document.getElementById('name').value,
+                adultPortion: parseFloat(document.getElementById('adultPortion').value),
+                youthPortion: parseFloat(document.getElementById('youthPortion').value),
+                kidPortion: parseFloat(document.getElementById('kidPortion').value),
+                unitOfMeasure: document.getElementById('unitOfMeasure').value
+            };
+
+            fetch('/api/menus/ingredients', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = '/menus/ingredients';
+                } else {
+                    alert('Failed to create ingredient');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while creating the ingredient');
+            });
+        });
+    </script>
+</body>
+</html>

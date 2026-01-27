@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Menu - Retreat Meal Manager</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a th:href="@{/}">Retreat Meal Manager</a>
+        </div>
+        <ul class="nav-menu">
+            <li><a th:href="@{/}">Home</a></li>
+            <li><a th:href="@{/sessions}">Sessions</a></li>
+            <li><a th:href="@{/menus}" class="active">Menus</a></li>
+            <li><a th:href="@{/menus/ingredients}">Ingredients</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <main>
+            <div class="page-header">
+                <h1>Create New Menu</h1>
+            </div>
+
+            <div class="form-container">
+                <form id="menuForm" class="form">
+                    <div class="form-group">
+                        <label for="menuName">Menu Name</label>
+                        <input type="text" id="menuName" name="menuName" required
+                               placeholder="e.g., Breakfast - Pancakes & Eggs">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Create Menu</button>
+                        <a th:href="@{/menus}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 Retreat Meal Manager</p>
+    </footer>
+
+    <script th:src="@{/js/main.js}"></script>
+    <script>
+        document.getElementById('menuForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = {
+                menuName: document.getElementById('menuName').value
+            };
+
+            fetch('/api/menus', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(menu => {
+                window.location.href = '/menus/' + menu.menuId;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while creating the menu');
+            });
+        });
+    </script>
+</body>
+</html>

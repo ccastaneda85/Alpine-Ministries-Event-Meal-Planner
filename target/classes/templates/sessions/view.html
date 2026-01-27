@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${sess.name} + ' - Retreat Meal Manager'">Session Details</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a th:href="@{/}">Retreat Meal Manager</a>
+        </div>
+        <ul class="nav-menu">
+            <li><a th:href="@{/}">Home</a></li>
+            <li><a th:href="@{/sessions}" class="active">Sessions</a></li>
+            <li><a th:href="@{/menus}">Menus</a></li>
+            <li><a th:href="@{/menus/ingredients}">Ingredients</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <main>
+            <div class="page-header">
+                <div>
+                    <h1 th:text="${sess.name}">Session Name</h1>
+                    <p class="session-dates">
+                        <span th:text="${#temporals.format(sess.startDate, 'MMMM dd, yyyy')}"></span>
+                        -
+                        <span th:text="${#temporals.format(sess.endDate, 'MMMM dd, yyyy')}"></span>
+                    </p>
+                </div>
+                <div>
+                    <a th:href="@{/sessions/{id}/edit(id=${sess.id})}" class="btn btn-secondary">Edit Session</a>
+                    <a th:href="@{/purchaselists/session/{id}(id=${sess.id})}" class="btn btn-primary">View Purchase List</a>
+                </div>
+            </div>
+
+            <!-- Groups Section -->
+            <section class="card">
+                <div class="card-header">
+                    <h2>Groups</h2>
+                    <button class="btn btn-sm btn-primary" onclick="showAddGroupModal()">Add Group</button>
+                </div>
+                <div class="card-body">
+                    <div th:if="${sess.groups.isEmpty()}" class="empty-state">
+                        <p>No groups added yet. Add groups attending this retreat.</p>
+                    </div>
+                    <table th:unless="${sess.groups.isEmpty()}" class="table">
+                        <thead>
+                            <tr>
+                                <th>Group Name</th>
+                                <th>Adults</th>
+                                <th>Youth</th>
+                                <th>Kids</th>
+                                <th>Total</th>
+                                <th>Arrival</th>
+                                <th>Departure</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="group : ${sess.groups}">
+                                <td th:text="${group.groupName}">Church Group</td>
+                                <td th:text="${group.adultCount}">15</td>
+                                <td th:text="${group.youthCount}">10</td>
+                                <td th:text="${group.kidCount}">5</td>
+                                <td th:text="${group.adultCount + group.youthCount + group.kidCount}">30</td>
+                                <td th:text="${#temporals.format(group.arrivalDate, 'MMM dd')}">Jun 15</td>
+                                <td th:text="${#temporals.format(group.departureDate, 'MMM dd')}">Jun 20</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Days and Meal Periods Section -->
+            <section class="card">
+                <div class="card-header">
+                    <h2>Daily Meal Schedule</h2>
+                </div>
+                <div class="card-body">
+                    <div th:each="day : ${sess.days}" class="day-section">
+                        <h3 th:text="${#temporals.format(day.date, 'EEEE, MMMM dd, yyyy')}">Day</h3>
+                        <div class="meal-periods">
+                            <div th:each="mealPeriod : ${day.mealPeriods}" class="meal-period-card">
+                                <h4 th:text="${mealPeriod.mealPeriodType}">BREAKFAST</h4>
+                                <div th:if="${mealPeriod.menu != null}">
+                                    <p class="menu-name" th:text="'Menu: ' + ${mealPeriod.menu.menuName}">Menu Name</p>
+                                    <button class="btn btn-sm btn-secondary"
+                                            th:onclick="'changeMenu(' + ${mealPeriod.id} + ')'">Change</button>
+                                    <button class="btn btn-sm btn-danger"
+                                            th:onclick="'clearMenu(' + ${mealPeriod.id} + ')'">Clear</button>
+                                </div>
+                                <div th:unless="${mealPeriod.menu != null}">
+                                    <p class="text-muted">No menu assigned</p>
+                                    <button class="btn btn-sm btn-primary"
+                                            th:onclick="'assignMenu(' + ${mealPeriod.id} + ')'">Assign Menu</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="day-actions">
+                            <a th:href="@{/preplists/day/{id}(id=${day.id})}" class="btn btn-sm btn-secondary">View Prep List</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Add Group Modal -->
+    <div id="addGroupModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddGroupModal()">&times;</span>
+            <h2>Add Group</h2>
+            <form id="addGroupForm" class="form">
+                <div class="form-group">
+                    <label for="groupName">Group Name</label>
+                    <input type="text" id="groupName" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="adultCount">Adults</label>
+                        <input type="number" id="adultCount" min="0" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="youthCount">Youth</label>
+                        <input type="number" id="youthCount" min="0" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="kidCount">Kids</label>
+                        <input type="number" id="kidCount" min="0" value="0" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="arrivalDate">Arrival Date</label>
+                        <input type="date" id="arrivalDate" required
+                               th:value="${sess.startDate}">
+                    </div>
+                    <div class="form-group">
+                        <label for="departureDate">Departure Date</label>
+                        <input type="date" id="departureDate" required
+                               th:value="${sess.endDate}">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Add Group</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAddGroupModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Assign Menu Modal -->
+    <div id="assignMenuModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAssignMenuModal()">&times;</span>
+            <h2>Assign Menu</h2>
+            <div id="menuList" class="menu-list"></div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 Retreat Meal Manager</p>
+    </footer>
+
+    <script th:src="@{/js/main.js}"></script>
+    <script th:inline="javascript">
+        const sessionId = /*[[${sess.sessionId}]]*/ 0;
+        let currentMealPeriodId = null;
+
+        function showAddGroupModal() {
+            document.getElementById('addGroupModal').style.display = 'block';
+        }
+
+        function closeAddGroupModal() {
+            document.getElementById('addGroupModal').style.display = 'none';
+        }
+
+        function closeAssignMenuModal() {
+            document.getElementById('assignMenuModal').style.display = 'none';
+        }
+
+        document.getElementById('addGroupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = {
+                groupName: document.getElementById('groupName').value,
+                adultCount: parseInt(document.getElementById('adultCount').value),
+                youthCount: parseInt(document.getElementById('youthCount').value),
+                kidCount: parseInt(document.getElementById('kidCount').value),
+                arrivalDate: document.getElementById('arrivalDate').value,
+                departureDate: document.getElementById('departureDate').value
+            };
+
+            fetch(`/api/sessions/${sessionId}/groups`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Failed to add group');
+                }
+            });
+        });
+
+        function assignMenu(mealPeriodId) {
+            currentMealPeriodId = mealPeriodId;
+            loadMenus();
+            document.getElementById('assignMenuModal').style.display = 'block';
+        }
+
+        function changeMenu(mealPeriodId) {
+            assignMenu(mealPeriodId);
+        }
+
+        function clearMenu(mealPeriodId) {
+            if (confirm('Clear menu from this meal period?')) {
+                fetch(`/api/mealperiods/${mealPeriodId}/menu`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    }
+                });
+            }
+        }
+
+        function loadMenus() {
+            fetch('/api/menus')
+                .then(response => response.json())
+                .then(menus => {
+                    const menuList = document.getElementById('menuList');
+                    menuList.innerHTML = menus.map(menu => `
+                        <div class="menu-item" onclick="selectMenu(${menu.menuId})">
+                            <h4>${menu.menuName}</h4>
+                        </div>
+                    `).join('');
+                });
+        }
+
+        function selectMenu(menuId) {
+            fetch(`/api/mealperiods/${currentMealPeriodId}/menu/${menuId}`, {
+                method: 'PUT'
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Failed to assign menu');
+                }
+            });
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const groupModal = document.getElementById('addGroupModal');
+            const menuModal = document.getElementById('assignMenuModal');
+            if (event.target == groupModal) {
+                closeAddGroupModal();
+            }
+            if (event.target == menuModal) {
+                closeAssignMenuModal();
+            }
+        }
+    </script>
+</body>
+</html>
