@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Kitchen Prep - Event Meal Planner</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand"><a th:href="@{/}">Event Meal Planner v2</a></div>
+        <ul class="nav-links">
+            <li class="nav-dropdown"><span>Planning</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/meal-plans}">Meal Plans</a></li>
+                    <li><a th:href="@{/event-days}">Event Days</a></li>
+                    <li><a th:href="@{/kitchen-prep}">Kitchen Prep</a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown"><span>Catalog</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/menus}">Menus</a></li>
+                    <li><a th:href="@{/menu-items}">Menu Items</a></li>
+                    <li><a th:href="@{/ingredients}">Ingredients</a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown"><span>Reservations</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/group-reservations}">Group Reservations</a></li>
+                    <li><a th:href="@{/attendance}">Meal Attendance</a></li>
+                </ul>
+            </li>
+            <li><a th:href="@{/purchase-lists}">Purchasing</a></li>
+            <li><a th:href="@{/dashboard}">Dashboard</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+        <div class="page-header">
+            <h1>Kitchen Prep - <span th:text="${#temporals.format(prepList.eventDay.date, 'EEEE, MMM d')}"></span></h1>
+            <a th:href="@{/kitchen-prep}" class="btn btn-secondary">Back to List</a>
+        </div>
+
+        <div class="card mb-2">
+            <h3>Prep List Notes</h3>
+            <form th:action="@{/kitchen-prep/{id}/notes(id=${prepList.kitchenPrepListId})}" method="post">
+                <div class="form-group">
+                    <textarea name="notes" rows="3" th:text="${prepList.notes}" placeholder="Add prep notes..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Save Notes</button>
+            </form>
+        </div>
+
+        <h2 class="mb-1">Add Prep Item</h2>
+        <div class="form-container mb-2">
+            <form th:action="@{/kitchen-prep/{id}/items(id=${prepList.kitchenPrepListId})}" method="post">
+                <div class="form-group">
+                    <label for="menuItemName">Item Name / Description</label>
+                    <input type="text" id="menuItemName" name="menuItemName" required placeholder="e.g., Thaw chicken, Prep salad bar">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="adultServings">Adult Servings</label>
+                        <input type="number" id="adultServings" name="adultServings" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="youthServings">Youth Servings</label>
+                        <input type="number" id="youthServings" name="youthServings" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="kidServings">Kid Servings</label>
+                        <input type="number" id="kidServings" name="kidServings" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="codeServings">Code Servings</label>
+                        <input type="number" id="codeServings" name="codeServings" value="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="notes">Notes</label>
+                    <input type="text" id="notes" name="notes" placeholder="Optional notes">
+                </div>
+                <button type="submit" class="btn btn-success">Add Item</button>
+            </form>
+        </div>
+
+        <h2 class="mb-1">Prep Items</h2>
+        <div th:if="${prepList.items.empty}" class="empty-state">
+            <p>No prep items yet. Add items above.</p>
+        </div>
+
+        <div th:unless="${prepList.items.empty}" class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Adult</th>
+                        <th>Youth</th>
+                        <th>Kid</th>
+                        <th>Code</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${prepList.items}">
+                        <td th:text="${item.menuItemName}"></td>
+                        <td th:text="${item.adultServings}"></td>
+                        <td th:text="${item.youthServings}"></td>
+                        <td th:text="${item.kidServings}"></td>
+                        <td th:text="${item.codeServings}"></td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${item.status.name() == 'DONE' ? 'badge-success' : (item.status.name() == 'IN_PROGRESS' ? 'badge-warning' : 'badge-secondary')}"
+                                  th:text="${item.status}"></span>
+                        </td>
+                        <td th:text="${item.notes}"></td>
+                        <td class="actions">
+                            <form th:action="@{/kitchen-prep/{prepId}/items/{itemId}/status(prepId=${prepList.kitchenPrepListId}, itemId=${item.kitchenPrepListItemId})}" method="post" style="display:inline">
+                                <select name="status" onchange="this.form.submit()">
+                                    <option value="TODO" th:selected="${item.status.name() == 'TODO'}">TODO</option>
+                                    <option value="IN_PROGRESS" th:selected="${item.status.name() == 'IN_PROGRESS'}">In Progress</option>
+                                    <option value="DONE" th:selected="${item.status.name() == 'DONE'}">Done</option>
+                                </select>
+                            </form>
+                            <form th:action="@{/kitchen-prep/{prepId}/items/{itemId}/delete(prepId=${prepList.kitchenPrepListId}, itemId=${item.kitchenPrepListItemId})}" method="post" style="display:inline" data-confirm="Delete this item?">
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer class="footer"><p>Event Meal Planner v2 - Testing Interface</p></footer>
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

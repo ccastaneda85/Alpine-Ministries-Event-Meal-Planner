@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${reservation.groupReservationId != null ? 'Edit Reservation' : 'New Reservation'} + ' - Event Meal Planner'">Reservation Form</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand"><a th:href="@{/}">Event Meal Planner v2</a></div>
+        <ul class="nav-links">
+            <li class="nav-dropdown"><span>Planning</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/meal-plans}">Meal Plans</a></li>
+                    <li><a th:href="@{/event-days}">Event Days</a></li>
+                    <li><a th:href="@{/kitchen-prep}">Kitchen Prep</a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown"><span>Catalog</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/menus}">Menus</a></li>
+                    <li><a th:href="@{/menu-items}">Menu Items</a></li>
+                    <li><a th:href="@{/ingredients}">Ingredients</a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown"><span>Reservations</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/group-reservations}">Group Reservations</a></li>
+                    <li><a th:href="@{/attendance}">Meal Attendance</a></li>
+                </ul>
+            </li>
+            <li><a th:href="@{/purchase-lists}">Purchasing</a></li>
+            <li><a th:href="@{/dashboard}">Dashboard</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <div class="page-header">
+            <h1 th:text="${reservation.groupReservationId != null ? 'Edit Reservation' : 'New Reservation'}">Reservation Form</h1>
+        </div>
+
+        <div class="form-container">
+            <form th:action="${reservation.groupReservationId != null ? '/group-reservations/' + reservation.groupReservationId : '/group-reservations'}" method="post">
+                <div class="form-group">
+                    <label for="groupName">Group Name</label>
+                    <input type="text" id="groupName" name="groupName" th:value="${reservation.groupName}" required placeholder="e.g., Church Youth Group, Family Camp">
+                </div>
+
+                <div th:if="${reservation.groupReservationId == null}" class="form-row">
+                    <div class="form-group">
+                        <label for="arrivalDate">Arrival Date</label>
+                        <input type="date" id="arrivalDate" name="arrivalDate" th:value="${reservation.arrivalDate}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="departureDate">Departure Date</label>
+                        <input type="date" id="departureDate" name="departureDate" th:value="${reservation.departureDate}" required>
+                    </div>
+                </div>
+
+                <h3 class="mt-2">Default Headcounts</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="defaultAdultCount">Adults</label>
+                        <input type="number" id="defaultAdultCount" name="defaultAdultCount" th:value="${reservation.defaultAdultCount}" value="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="defaultYouthCount">Youth</label>
+                        <input type="number" id="defaultYouthCount" name="defaultYouthCount" th:value="${reservation.defaultYouthCount}" value="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="defaultKidCount">Kids</label>
+                        <input type="number" id="defaultKidCount" name="defaultKidCount" th:value="${reservation.defaultKidCount}" value="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="defaultCodeCount">Code</label>
+                        <input type="number" id="defaultCodeCount" name="defaultCodeCount" th:value="${reservation.defaultCodeCount}" value="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="defaultCustomDietCount">Custom Diet</label>
+                        <input type="number" id="defaultCustomDietCount" name="defaultCustomDietCount" th:value="${reservation.defaultCustomDietCount}" value="0" min="0" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="customDietNotes">Custom Diet Notes</label>
+                    <textarea id="customDietNotes" name="customDietNotes" rows="2" th:text="${reservation.customDietNotes}" placeholder="e.g., 2 gluten-free, 1 vegetarian"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">General Notes</label>
+                    <textarea id="notes" name="notes" rows="2" th:text="${reservation.notes}" placeholder="Additional notes about this group"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success" th:text="${reservation.groupReservationId != null ? 'Update' : 'Create'}">Save</button>
+                    <a th:href="@{/group-reservations}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <footer class="footer"><p>Event Meal Planner v2 - Testing Interface</p></footer>
+</body>
+</html>

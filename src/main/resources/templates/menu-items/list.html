@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Menu Items - Event Meal Planner</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand"><a th:href="@{/}">Event Meal Planner v2</a></div>
+        <ul class="nav-links">
+            <li class="nav-dropdown"><span>Planning</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/meal-plans}">Meal Plans</a></li>
+                    <li><a th:href="@{/event-days}">Event Days</a></li>
+                    <li><a th:href="@{/kitchen-prep}">Kitchen Prep</a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown"><span>Catalog</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/menus}">Menus</a></li>
+                    <li><a th:href="@{/menu-items}">Menu Items</a></li>
+                    <li><a th:href="@{/ingredients}">Ingredients</a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown"><span>Reservations</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/group-reservations}">Group Reservations</a></li>
+                    <li><a th:href="@{/attendance}">Meal Attendance</a></li>
+                </ul>
+            </li>
+            <li><a th:href="@{/purchase-lists}">Purchasing</a></li>
+            <li><a th:href="@{/dashboard}">Dashboard</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+        <div class="page-header">
+            <h1>Menu Items</h1>
+            <a th:href="@{/menu-items/new}" class="btn btn-success">+ New Menu Item</a>
+        </div>
+
+        <div th:if="${menuItems.empty}" class="empty-state">
+            <p>No menu items found.</p>
+            <a th:href="@{/menu-items/new}" class="btn btn-primary">Create your first menu item</a>
+        </div>
+
+        <div th:unless="${menuItems.empty}" class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Recipes</th>
+                        <th>Used In Menus</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${menuItems}">
+                        <td th:text="${item.menuItemId}"></td>
+                        <td th:text="${item.menuItemName}"></td>
+                        <td th:text="${item.recipes.size()}"></td>
+                        <td th:text="${item.menuEntries.size()}"></td>
+                        <td class="actions">
+                            <a th:href="@{/menu-items/{id}(id=${item.menuItemId})}" class="btn btn-sm btn-primary">View</a>
+                            <a th:href="@{/menu-items/{id}/edit(id=${item.menuItemId})}" class="btn btn-sm btn-secondary">Edit</a>
+                            <form th:action="@{/menu-items/{id}/delete(id=${item.menuItemId})}" method="post" style="display:inline" data-confirm="Delete this menu item?">
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer class="footer"><p>Event Meal Planner v2 - Testing Interface</p></footer>
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+Module 1: Planning
+Purpose: Owns the user’s meal planning workspace and the day structure for the plan. Stores what meals exist on each day and which menus are selected for each meal.
+Responsibilities:
+•	Create and manage a MealPlan, including its date range and metadata.
+•	Ensure planning structure exists for the MealPlan window, EventDays and MealPeriods.
+•	Store menu selections per meal period for each day.
+•	Provide day level planning status and notes if needed.
+Key entities and responsibilities:
+MealPlan
+•	Represents the planning workspace the user creates.
+•	Holds startDate and endDate, and optional name or status.
+•	Drives initialization of EventDays and MealPeriods in the plan window.
+•	Is the anchor used by Purchasing to generate PurchaseLists
+EventDay
+•	Represents a single calendar day in the plan.
+•	Owns its MealPeriods for that day. Owns exactly three MealPeriods (Breakfast, Lunch and dinner). 
+•	Holds day level state such as status or notes if you add them.
+MealPeriod
+•	Represents one scheduled meal occurrence on a specific EventDay, breakfast, lunch, and dinner.
+•	Holds the selected Menu for that meal.
+•	May hold status like served or skipped, plus meal specific notes if needed.
+•	Enforces one per meal type per day via uniqueness.
+KitchenPrepList
+•	Represents a day level kitchen preparation workspace tied to a single EventDay.
+•	Owned by EventDay and created for manual entry in v1.
+•	Stores optional day level kitchen notes and supports attaching multiple KitchenPrepListItems.
+•	Supports a workflow where staff can review what is being served and attendance totals and then manually enter prep tasks and prep notes without affecting recipes or purchasing math.
+
+KitchenPrepListItem
+•	Represents one manually entered prep task or prep line item for kitchen operations for a specific EventDay.
+•	Should be flexible enough to represent tasks that do not map cleanly to a MenuItem or Ingredient, such as “thaw chicken,” “set up salad bar,” or “prepare allergy safe tray.”
+•	Recommended members for v1 are simple and manual-first:
+•	description or name (string)
+•	optional notes (string)
+•	optional status (todo, inProgress, done)
+•	optional ordering or priority (int)
+•	Optional future extension fields, which can be nullable now if you want forward compatibility:
+•	menuItemId (nullable FK) for linking a prep item to a MenuItem when it makes sense
+•	quantity and unitLabel (nullable) if staff wants to record “prep 3 pans” or “prep 60 each”
+•	KitchenPrepListItems are operational artifacts and do not drive purchasing quantities in v1. They may reference the day’s menu and attendance only for human guidance.
+Notes:
+User must be able to see customDietCounts and specialDietNotes for each MealPeriod or within Purchasing and KitchenPrep modules or interfaces. Users will manually enter special PurchaseListItems and KitchenPrepListItems to account for guests with special diets. There is currently no automated mapping that routes MenuItems to special diet guests, so these exceptions are handled as manual operational entries for v1.
+
+Module 2: Reservations and Attendance
+Purpose: Owns group stays and who is eating for each group per meal. This is the source of truth for headcounts used by purchasing and dashboard totals.
+Responsibilities: 
+•	Create and manage GroupReservations, date range and default headcounts.
+•	Initialize attendance for a reservation across the plan’s meal periods.
+•	Allow overrides per meal, per day, per group.
+•	Support skip logic for a group for a specific meal.
+Key entities and responsibilities:
+GroupReservation:
+•	Represents one group’s stay, organization name, date range, and default headcounts.
+•	Provides the defaults used to initialize meal attendance.
+•	Does not store per meal adjustments as truth, those live on attendance records.
+GroupMealAttendance:
+•	Represents attendance for one group for one specific MealPeriod.
+•	Holds the effective counts for that group at that meal.
+•	Supports override behavior, either by separate flags or by updating the row.
+•	Enforces uniqueness per groupReservationId and mealPeriodId.
+
+Notes: Initialization of GroupReservations first searches if EventDay with matching dates exsist and links a GroupMealAttendance for that EventDay’s MealPeriod. If EventDay does not exist, one is created along with the three MealPeriods. All default headcounts are populated throughout each GroupMealAttendance entry, but can be overwritten when necessary as a part of the application’s service. This is for granular control of headcounts for each day.  
+
+Module 3: Menu and Recipe Catalog
+Purpose: Owns reusable templates for what can be served. This is the catalog of menus, recipes, and ingredients.
+Responsibilities:
+•	Maintain Menu templates and which MenuItems they include.
+•	Maintain MenuItems and their recipe composition.
+•	Maintain Ingredient library and default unit of measure.
+•	Define recipe portions per person type on the recipe line.
+Key entities and responsibilities
+Menu
+•	Represents a predefined template that can be selected for a MealPeriod.
+•	Contains a set of MenuEntries.
+MenuEntry
+•	Places a MenuItem into a Menu.
+•	Supports metadata about placement if needed later, order, role, notes, substitutions.
+MenuItem
+•	Represents a dish or prepared item, like Cheeseburger, Fries, Salad.
+•	Owns recipe lines that specify ingredients and portions.
+MenuItemReceipe
+•	Connects one MenuItem to one Ingredient.
+•	Holds portions for adult, youth, kid, plus unit and optional override unit if you support it.
+•	This is the correct home for portion data.
+Ingredient
+•	Represents an ingredient in the catalog.
+•	Holds the default unit of measure and identifying info like name and category.
+
+Module 4: Purchasing
+Purpose: Owns generation and management of PurchaseLists. Produces a snapshot shopping list that can be edited without changing recipes or menus.
+Responsibilities
+•	Generate a PurchaseList from a MealPlan date range.
+•	Read attendance totals from GroupMealAttendance and multiply by recipe portions.
+•	Aggregate quantities by ingredient name and unit of measure.
+•	Persist PurchaseList and PurchaseListItems as a snapshot artifact.
+•	Allow edits to the PurchaseListItems without affecting MenuItems or Ingredients.
+
+Key entities and responsibilities
+PurchaseList
+•	Represents one generated list for a MealPlan or a date range.
+•	Stores metadata like createdAt, status, and optional notes.
+•	Usually one to one with MealPlan, enforced by a unique constraint if desired.
+PurchaseListItem
+•	Represents one line item in a PurchaseList.
+•	Stores snapshot fields like itemName, qty, uom, notes, checked.
+•	Should not need to reference Ingredient, unless you keep a nullable ingredientId for traceability.
+•	Dies when PurchaseList is deleted, via cascade.
+
+Notes: User must be able to create Purchase List from MealPlan aggregated data, that means all ingredients factored out from all head counts show up as purchase list items on the purchase list. User must be able to see all customDietCounts and their associated group on the interface when making a purchase list. User must also be able to manually add purchase list items to account for non-routine customDiet purchases and similar. User may also be able to create a Purchase List from a MealPlan without auto population of data, such as an empty plan. 
+
+Layered Architecture: 
+ 
+
+ 

@@ -1,0 +1,128 @@
+@startuml
+title Logical View: Layered Architecture
+
+skinparam packageStyle rectangle
+
+package "Presentation Layer" {
+  class MealPlanController
+  class EventDayController
+  class MealPeriodController
+  class KitchenPrepController
+
+  class GroupReservationController
+  class GroupMealAttendanceController
+
+  class MenuController
+  class MenuEntryController
+  class MenuItemController
+  class IngredientController
+  class MenuItemRecipeController
+
+  class PurchaseListController
+  class PurchaseListItemController
+
+  class EventDayDashboardController
+}
+
+package "Application Layer" {
+  class MealPlanService
+  class EventDayService
+  class MealPeriodService
+  class KitchenPrepService
+
+  class GroupReservationService
+  class GroupMealAttendanceService
+
+  class MenuService
+  class MenuEntryService
+  class MenuItemService
+  class IngredientService
+  class MenuItemRecipeService
+
+  class PurchaseListService
+  class PurchaseListGenerationService
+
+  class EventDayDashboardQueryService
+}
+
+package "Domain Layer" {
+  class MealPlan
+  class EventDay
+  class MealPeriod
+  class KitchenPrepList
+  class KitchenPrepListItem
+
+  class GroupReservation
+  class GroupMealAttendance
+
+  class Menu
+  class MenuEntry
+  class MenuItem
+  class MenuItemRecipe
+  class Ingredient
+
+  class PurchaseList
+  class PurchaseListItem
+
+  class IngredientAggregationService
+  class PortionCalculator
+  class PurchaseListBuilder
+  class AttendanceTotalsCalculator
+}
+
+package "Infrastructure Layer" {
+  class MealPlanRepository
+  class EventDayRepository
+  class MealPeriodRepository
+  class KitchenPrepListRepository
+  class KitchenPrepListItemRepository
+
+  class GroupReservationRepository
+  class GroupMealAttendanceRepository
+
+  class MenuRepository
+  class MenuEntryRepository
+  class MenuItemRepository
+  class MenuItemRecipeRepository
+  class IngredientRepository
+
+  class PurchaseListRepository
+  class PurchaseListItemRepository
+}
+
+' Dependencies
+MealPlanController --> MealPlanService
+EventDayController --> EventDayService
+MealPeriodController --> MealPeriodService
+KitchenPrepController --> KitchenPrepService
+
+GroupReservationController --> GroupReservationService
+GroupMealAttendanceController --> GroupMealAttendanceService
+
+MenuController --> MenuService
+MenuEntryController --> MenuEntryService
+MenuItemController --> MenuItemService
+IngredientController --> IngredientService
+MenuItemRecipeController --> MenuItemRecipeService
+
+PurchaseListController --> PurchaseListService
+PurchaseListItemController --> PurchaseListService
+
+EventDayDashboardController --> EventDayDashboardQueryService
+
+MealPlanService --> MealPlan
+MealPlanService --> EventDay
+MealPlanService --> MealPeriod
+
+GroupReservationService --> GroupReservation
+GroupReservationService --> EventDayService
+GroupReservationService --> MealPeriodService
+GroupReservationService --> GroupMealAttendanceService
+
+PurchaseListService --> PurchaseList
+PurchaseListService --> PurchaseListItem
+PurchaseListService --> IngredientAggregationService
+PurchaseListService --> PortionCalculator
+PurchaseListService --> PurchaseListBuilder
+
+@enduml

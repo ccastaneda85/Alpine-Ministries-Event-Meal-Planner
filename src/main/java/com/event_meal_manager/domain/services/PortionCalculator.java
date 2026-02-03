@@ -1,44 +1,33 @@
 package com.event_meal_manager.domain.services;
 
-import com.event_meal_manager.domain.menu.Ingredient;
-import com.event_meal_manager.domain.menu.Menu;
-import com.event_meal_manager.domain.menu.MenuItem;
-import org.springframework.stereotype.Service;
+import com.event_meal_manager.domain.catalog.MenuItemRecipe;
+import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.Map;
-
-@Service
+@Component
 public class PortionCalculator {
 
-    public Map<Ingredient, Float> calculateIngredientsForMenu(Menu menu, int adultCount, int youthCount, int kidCount) {
-        if (menu == null) {
-            return new HashMap<>();
-        }
-
-        Map<Ingredient, Float> ingredientTotals = new HashMap<>();
-
-        for (MenuItem menuItem : menu.getMenuItems()) {
-            Ingredient ingredient = menuItem.getIngredient();
-
-            float totalQuantity = calculateIngredientQuantity(
-                    ingredient,
-                    adultCount,
-                    youthCount,
-                    kidCount
-            );
-
-            ingredientTotals.merge(ingredient, totalQuantity, Float::sum);
-        }
-
-        return ingredientTotals;
+    public float calculateTotalPortion(MenuItemRecipe recipe, int adultCount, int youthCount, int kidCount, int codeCount) {
+        float total = 0.0f;
+        total += recipe.getAdultPortion() * adultCount;
+        total += recipe.getYouthPortion() * youthCount;
+        total += recipe.getKidPortion() * kidCount;
+        total += recipe.getCodePortion() * codeCount;
+        return total;
     }
 
-    public float calculateIngredientQuantity(Ingredient ingredient, int adultCount, int youthCount, int kidCount) {
-        float adultTotal = ingredient.getAdultPortion() * adultCount;
-        float youthTotal = ingredient.getYouthPortion() * youthCount;
-        float kidTotal = ingredient.getKidPortion() * kidCount;
+    public float calculateAdultPortions(MenuItemRecipe recipe, int count) {
+        return recipe.getAdultPortion() * count;
+    }
 
-        return adultTotal + youthTotal + kidTotal;
+    public float calculateYouthPortions(MenuItemRecipe recipe, int count) {
+        return recipe.getYouthPortion() * count;
+    }
+
+    public float calculateKidPortions(MenuItemRecipe recipe, int count) {
+        return recipe.getKidPortion() * count;
+    }
+
+    public float calculateCodePortions(MenuItemRecipe recipe, int count) {
+        return recipe.getCodePortion() * count;
     }
 }

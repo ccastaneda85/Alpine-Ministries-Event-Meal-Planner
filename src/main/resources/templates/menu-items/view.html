@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${menuItem.menuItemName} + ' - Event Meal Planner'">Menu Item View</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand"><a th:href="@{/}">Event Meal Planner v2</a></div>
+        <ul class="nav-links">
+            <li class="nav-dropdown"><span>Planning</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/meal-plans}">Meal Plans</a></li>
+                    <li><a th:href="@{/event-days}">Event Days</a></li>
+                    <li><a th:href="@{/kitchen-prep}">Kitchen Prep</a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown"><span>Catalog</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/menus}">Menus</a></li>
+                    <li><a th:href="@{/menu-items}">Menu Items</a></li>
+                    <li><a th:href="@{/ingredients}">Ingredients</a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown"><span>Reservations</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/group-reservations}">Group Reservations</a></li>
+                    <li><a th:href="@{/attendance}">Meal Attendance</a></li>
+                </ul>
+            </li>
+            <li><a th:href="@{/purchase-lists}">Purchasing</a></li>
+            <li><a th:href="@{/dashboard}">Dashboard</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+        <div class="page-header">
+            <h1 th:text="${menuItem.menuItemName}">Menu Item Name</h1>
+            <div class="actions">
+                <a th:href="@{/menu-items/{id}/edit(id=${menuItem.menuItemId})}" class="btn btn-secondary">Edit</a>
+                <a th:href="@{/menu-items}" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+
+        <h2 class="mb-1">Add Recipe Line (Ingredient)</h2>
+        <div class="form-container mb-2">
+            <form th:action="@{/menu-items/{id}/recipes(id=${menuItem.menuItemId})}" method="post">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="ingredientId">Ingredient</label>
+                        <select id="ingredientId" name="ingredientId" required>
+                            <option value="">-- Select Ingredient --</option>
+                            <option th:each="ing : ${ingredients}" th:value="${ing.ingredientId}" th:text="${ing.ingredientName + ' (' + ing.unitOfMeasure + ')'}"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="adultPortion">Adult Portion</label>
+                        <input type="number" step="0.01" id="adultPortion" name="adultPortion" value="1.0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="youthPortion">Youth Portion</label>
+                        <input type="number" step="0.01" id="youthPortion" name="youthPortion" value="0.75" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="kidPortion">Kid Portion</label>
+                        <input type="number" step="0.01" id="kidPortion" name="kidPortion" value="0.5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="codePortion">Code Portion</label>
+                        <input type="number" step="0.01" id="codePortion" name="codePortion" value="1.0" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="notes">Notes</label>
+                    <input type="text" id="notes" name="notes" placeholder="Optional notes">
+                </div>
+                <button type="submit" class="btn btn-success">Add Recipe Line</button>
+            </form>
+        </div>
+
+        <h2 class="mb-1">Recipe (Ingredients)</h2>
+        <div th:if="${menuItem.recipes.empty}" class="empty-state">
+            <p>No ingredients in this recipe yet.</p>
+        </div>
+
+        <div th:unless="${menuItem.recipes.empty}" class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ingredient</th>
+                        <th>Unit</th>
+                        <th>Adult</th>
+                        <th>Youth</th>
+                        <th>Kid</th>
+                        <th>Code</th>
+                        <th>Notes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="recipe : ${menuItem.recipes}">
+                        <td th:text="${recipe.ingredient.ingredientName}"></td>
+                        <td th:text="${recipe.ingredient.unitOfMeasure}"></td>
+                        <td th:text="${recipe.adultPortion}"></td>
+                        <td th:text="${recipe.youthPortion}"></td>
+                        <td th:text="${recipe.kidPortion}"></td>
+                        <td th:text="${recipe.codePortion}"></td>
+                        <td th:text="${recipe.notes}"></td>
+                        <td>
+                            <form th:action="@{/menu-items/{itemId}/recipes/{recipeId}/delete(itemId=${menuItem.menuItemId}, recipeId=${recipe.menuItemRecipeId})}" method="post" style="display:inline" data-confirm="Remove this ingredient?">
+                                <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer class="footer"><p>Event Meal Planner v2 - Testing Interface</p></footer>
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

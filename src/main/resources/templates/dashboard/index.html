@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Event Meal Planner</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand"><a th:href="@{/}">Event Meal Planner v2</a></div>
+        <ul class="nav-links">
+            <li class="nav-dropdown"><span>Planning</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/meal-plans}">Meal Plans</a></li>
+                    <li><a th:href="@{/event-days}">Event Days</a></li>
+                    <li><a th:href="@{/kitchen-prep}">Kitchen Prep</a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown"><span>Catalog</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/menus}">Menus</a></li>
+                    <li><a th:href="@{/menu-items}">Menu Items</a></li>
+                    <li><a th:href="@{/ingredients}">Ingredients</a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown"><span>Reservations</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/group-reservations}">Group Reservations</a></li>
+                    <li><a th:href="@{/attendance}">Meal Attendance</a></li>
+                </ul>
+            </li>
+            <li><a th:href="@{/purchase-lists}">Purchasing</a></li>
+            <li><a th:href="@{/dashboard}">Dashboard</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <div class="page-header">
+            <h1>Dashboard</h1>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="stat-card">
+                <div class="stat-value" th:text="${mealPlanCount}">0</div>
+                <div class="stat-label">Meal Plans</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" th:text="${menuCount}">0</div>
+                <div class="stat-label">Menus</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" th:text="${menuItemCount}">0</div>
+                <div class="stat-label">Menu Items</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" th:text="${ingredientCount}">0</div>
+                <div class="stat-label">Ingredients</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" th:text="${reservationCount}">0</div>
+                <div class="stat-label">Group Reservations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" th:text="${purchaseListCount}">0</div>
+                <div class="stat-label">Purchase Lists</div>
+            </div>
+        </div>
+
+        <h2 class="mt-2 mb-1">Quick Actions</h2>
+        <div class="card-grid">
+            <div class="card">
+                <h3>Create Meal Plan</h3>
+                <p>Start planning meals for an event or time period.</p>
+                <a th:href="@{/meal-plans/new}" class="btn btn-primary">New Meal Plan</a>
+            </div>
+            <div class="card">
+                <h3>Add Group Reservation</h3>
+                <p>Register a new group with headcounts.</p>
+                <a th:href="@{/group-reservations/new}" class="btn btn-primary">New Reservation</a>
+            </div>
+            <div class="card">
+                <h3>Create Menu</h3>
+                <p>Build a reusable menu template.</p>
+                <a th:href="@{/menus/new}" class="btn btn-primary">New Menu</a>
+            </div>
+            <div class="card">
+                <h3>Add Ingredient</h3>
+                <p>Add ingredients to the catalog.</p>
+                <a th:href="@{/ingredients/new}" class="btn btn-primary">New Ingredient</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer"><p>Event Meal Planner v2 - Testing Interface</p></footer>
+</body>
+</html>

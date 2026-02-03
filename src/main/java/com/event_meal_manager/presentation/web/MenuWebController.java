@@ -1,16 +1,14 @@
 package com.event_meal_manager.presentation.web;
 
-import com.event_meal_manager.application.menu.MenuService;
-import com.event_meal_manager.domain.menu.Ingredient;
-import com.event_meal_manager.domain.menu.Menu;
+import com.event_meal_manager.application.catalog.MenuEntryService;
+import com.event_meal_manager.application.catalog.MenuItemService;
+import com.event_meal_manager.application.catalog.MenuService;
+import com.event_meal_manager.domain.catalog.Menu;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/menus")
@@ -18,39 +16,73 @@ import java.util.List;
 public class MenuWebController {
 
     private final MenuService menuService;
+    private final MenuItemService menuItemService;
+    private final MenuEntryService menuEntryService;
 
     @GetMapping
-    public String listMenus(Model model) {
-        List<Menu> menus = menuService.getAllMenus();
-        model.addAttribute("menus", menus);
+    public String list(Model model) {
+        model.addAttribute("menus", menuService.findAll());
         return "menus/list";
     }
 
     @GetMapping("/new")
-    public String newMenu(Model model) {
-        List<Ingredient> ingredients = menuService.getAllIngredients();
-        model.addAttribute("ingredients", ingredients);
+    public String newForm(Model model) {
+        model.addAttribute("menu", Menu.builder().build());
         return "menus/form";
     }
 
+    @PostMapping
+    public String create(@RequestParam String menuName, RedirectAttributes redirectAttributes) {
+        Menu menu = menuService.create(menuName);
+        redirectAttributes.addFlashAttribute("successMessage", "Menu created successfully!");
+        return "redirect:/menus/" + menu.getMenuId();
+    }
+
     @GetMapping("/{id}")
-    public String viewMenu(@PathVariable Long id, Model model) {
-        Menu menu = menuService.getMenuById(id);
-        List<Ingredient> ingredients = menuService.getAllIngredients();
+    public String view(@PathVariable Long id, Model model) {
+        Menu menu = menuService.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Menu not found"));
         model.addAttribute("menu", menu);
-        model.addAttribute("ingredients", ingredients);
+        model.addAttribute("menuItems", menuItemService.findAll());
         return "menus/view";
     }
 
-    @GetMapping("/ingredients")
-    public String listIngredients(Model model) {
-        List<Ingredient> ingredients = menuService.getAllIngredients();
-        model.addAttribute("ingredients", ingredients);
-        return "ingredients/list";
+    @GetMapping("/{id}/edit")
+    public String editForm(@PathVariable Long id, Model model) {
+        Menu menu = menuService.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Menu not found"));
+        model.addAttribute("menu", menu);
+        return "menus/form";
     }
 
-    @GetMapping("/ingredients/new")
-    public String newIngredient() {
-        return "ingredients/form";
+    @PostMapping("/{id}")
+    public String update(@PathVariable Long id, @RequestParam String menuName, RedirectAttributes redirectAttributes) {
+        menuService.update(id, menuName);
+        redirectAttributes.addFlashAttribute("successMessage", "Menu updated successfully!");
+        return "redirect:/menus/" + id;
+    }
+
+    @PostMapping("/{id}/delete")
+    public String delete(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        menuService.delete(id);
+        redirectAttributes.addFlashAttribute("successMessage", "Menu deleted successfully!");
+        return "redirect:/menus";
+    }
+
+    @PostMapping("/{id}/entries")
+    public String addEntry(@PathVariable Long id,
+                           @RequestParam Long menuItemId,
+                           @RequestParam(defaultValue = "0") Integer displayOrder,
+                           RedirectAttributes redirectAttributes) {
+        menuEntryService.addMenuItemToMenu(id, menuItemId, displayOrder);
+        redirectAttributes.addFlashAttribute("successMessage", "Item added to menu!");
+        return "redirect:/menus/" + id;
+    }
+
+    @PostMapping("/{menuId}/entries/{entryId}/delete")
+    public String removeEntry(@PathVariable Long menuId, @PathVariable Long entryId, RedirectAttributes redirectAttributes) {
+        menuEntryService.delete(entryId);
+        redirectAttributes.addFlashAttribute("successMessage", "Item removed from menu!");
+        return "redirect:/menus/" + menuId;
     }
 }

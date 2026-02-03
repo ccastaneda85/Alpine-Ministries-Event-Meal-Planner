@@ -2,161 +2,103 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${menu.menuName} + ' - Retreat Meal Manager'">Menu Details</title>
+    <title th:text="${menu.menuName} + ' - Event Meal Planner'">Menu View</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
     <nav class="navbar">
-        <div class="nav-brand">
-            <a th:href="@{/}">Retreat Meal Manager</a>
-        </div>
-        <ul class="nav-menu">
-            <li><a th:href="@{/}">Home</a></li>
-            <li><a th:href="@{/sessions}">Sessions</a></li>
-            <li><a th:href="@{/menus}" class="active">Menus</a></li>
-            <li><a th:href="@{/menus/ingredients}">Ingredients</a></li>
+        <div class="nav-brand"><a th:href="@{/}">Event Meal Planner v2</a></div>
+        <ul class="nav-links">
+            <li class="nav-dropdown"><span>Planning</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/meal-plans}">Meal Plans</a></li>
+                    <li><a th:href="@{/event-days}">Event Days</a></li>
+                    <li><a th:href="@{/kitchen-prep}">Kitchen Prep</a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown"><span>Catalog</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/menus}">Menus</a></li>
+                    <li><a th:href="@{/menu-items}">Menu Items</a></li>
+                    <li><a th:href="@{/ingredients}">Ingredients</a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown"><span>Reservations</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/group-reservations}">Group Reservations</a></li>
+                    <li><a th:href="@{/attendance}">Meal Attendance</a></li>
+                </ul>
+            </li>
+            <li><a th:href="@{/purchase-lists}">Purchasing</a></li>
+            <li><a th:href="@{/dashboard}">Dashboard</a></li>
         </ul>
     </nav>
 
-    <div class="container">
-        <main>
-            <div class="page-header">
-                <h1 th:text="${menu.menuName}">Menu Name</h1>
-                <button class="btn btn-primary" onclick="showAddItemModal()">Add Menu Item</button>
+    <main class="container">
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+        <div class="page-header">
+            <h1 th:text="${menu.menuName}">Menu Name</h1>
+            <div class="actions">
+                <a th:href="@{/menus/{id}/edit(id=${menu.menuId})}" class="btn btn-secondary">Edit</a>
+                <a th:href="@{/menus}" class="btn btn-secondary">Back to List</a>
             </div>
+        </div>
 
-            <section class="card">
-                <div class="card-header">
-                    <h2>Menu Items</h2>
-                </div>
-                <div class="card-body">
-                    <div th:if="${menu.menuItems.isEmpty()}" class="empty-state">
-                        <p>No items added yet. Add ingredients to this menu.</p>
+        <h2 class="mb-1">Add Menu Item</h2>
+        <div class="form-container mb-2">
+            <form th:action="@{/menus/{id}/entries(id=${menu.menuId})}" method="post">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="menuItemId">Menu Item</label>
+                        <select id="menuItemId" name="menuItemId" required>
+                            <option value="">-- Select Item --</option>
+                            <option th:each="item : ${menuItems}" th:value="${item.menuItemId}" th:text="${item.menuItemName}"></option>
+                        </select>
                     </div>
-
-                    <table th:unless="${menu.menuItems.isEmpty()}" class="table">
-                        <thead>
-                            <tr>
-                                <th>Item Name</th>
-                                <th>Ingredient</th>
-                                <th>Adult Portion</th>
-                                <th>Youth Portion</th>
-                                <th>Kid Portion</th>
-                                <th>Unit</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="item : ${menu.menuItems}">
-                                <td th:text="${item.menuItemName}">Item Name</td>
-                                <td th:text="${item.ingredient.ingredientName}">Ingredient</td>
-                                <td th:text="${item.ingredient.adultPortion}">2.0</td>
-                                <td th:text="${item.ingredient.youthPortion}">1.5</td>
-                                <td th:text="${item.ingredient.kidPortion}">1.0</td>
-                                <td th:text="${item.ingredient.unitOfMeasure}">cups</td>
-                                <td>
-                                    <button class="btn btn-sm btn-danger"
-                                            th:onclick="'removeMenuItem(' + ${item.menuItemId} + ')'">Remove</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="form-group">
+                        <label for="displayOrder">Display Order</label>
+                        <input type="number" id="displayOrder" name="displayOrder" value="0">
+                    </div>
                 </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- Add Menu Item Modal -->
-    <div id="addItemModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeAddItemModal()">&times;</span>
-            <h2>Add Menu Item</h2>
-            <form id="addItemForm" class="form">
-                <div class="form-group">
-                    <label for="menuItemName">Item Name</label>
-                    <input type="text" id="menuItemName" required
-                           placeholder="e.g., Pancakes, Scrambled Eggs">
-                </div>
-
-                <div class="form-group">
-                    <label for="ingredientId">Select Ingredient</label>
-                    <select id="ingredientId" required>
-                        <option value="">-- Select an ingredient --</option>
-                        <option th:each="ingredient : ${ingredients}"
-                                th:value="${ingredient.ingredientId}"
-                                th:text="${ingredient.ingredientName} + ' (' + ${ingredient.unitOfMeasure} + ')'">
-                            Ingredient
-                        </option>
-                    </select>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Add Item</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeAddItemModal()">Cancel</button>
-                </div>
+                <button type="submit" class="btn btn-success">Add to Menu</button>
             </form>
         </div>
-    </div>
 
-    <footer class="footer">
-        <p>&copy; 2025 Retreat Meal Manager</p>
-    </footer>
+        <h2 class="mb-1">Menu Items</h2>
+        <div th:if="${menu.menuEntries.empty}" class="empty-state">
+            <p>No items in this menu yet.</p>
+        </div>
 
+        <div th:unless="${menu.menuEntries.empty}" class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Item Name</th>
+                        <th>Recipes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="entry : ${menu.menuEntries}">
+                        <td th:text="${entry.displayOrder}"></td>
+                        <td>
+                            <a th:href="@{/menu-items/{id}(id=${entry.menuItem.menuItemId})}" th:text="${entry.menuItem.menuItemName}"></a>
+                        </td>
+                        <td th:text="${entry.menuItem.recipes.size()}"></td>
+                        <td>
+                            <form th:action="@{/menus/{menuId}/entries/{entryId}/delete(menuId=${menu.menuId}, entryId=${entry.menuEntryId})}" method="post" style="display:inline" data-confirm="Remove this item from menu?">
+                                <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer class="footer"><p>Event Meal Planner v2 - Testing Interface</p></footer>
     <script th:src="@{/js/main.js}"></script>
-    <script th:inline="javascript">
-        const menuId = /*[[${menu.menuId}]]*/ 0;
-
-        function showAddItemModal() {
-            document.getElementById('addItemModal').style.display = 'block';
-        }
-
-        function closeAddItemModal() {
-            document.getElementById('addItemModal').style.display = 'none';
-            document.getElementById('addItemForm').reset();
-        }
-
-        document.getElementById('addItemForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            const formData = {
-                menuItemName: document.getElementById('menuItemName').value,
-                ingredientId: parseInt(document.getElementById('ingredientId').value)
-            };
-
-            fetch(`/api/menus/${menuId}/items`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            })
-            .then(response => {
-                if (response.ok) {
-                    window.location.reload();
-                } else {
-                    alert('Failed to add menu item');
-                }
-            });
-        });
-
-        function removeMenuItem(itemId) {
-            if (confirm('Remove this item from the menu?')) {
-                fetch(`/api/menus/items/${itemId}`, {
-                    method: 'DELETE'
-                })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.reload();
-                    }
-                });
-            }
-        }
-
-        window.onclick = function(event) {
-            const modal = document.getElementById('addItemModal');
-            if (event.target == modal) {
-                closeAddItemModal();
-            }
-        }
-    </script>
 </body>
 </html>

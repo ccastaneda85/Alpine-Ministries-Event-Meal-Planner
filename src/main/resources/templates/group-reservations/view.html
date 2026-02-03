@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${reservation.groupName} + ' - Event Meal Planner'">Reservation View</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand"><a th:href="@{/}">Event Meal Planner v2</a></div>
+        <ul class="nav-links">
+            <li class="nav-dropdown"><span>Planning</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/meal-plans}">Meal Plans</a></li>
+                    <li><a th:href="@{/event-days}">Event Days</a></li>
+                    <li><a th:href="@{/kitchen-prep}">Kitchen Prep</a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown"><span>Catalog</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/menus}">Menus</a></li>
+                    <li><a th:href="@{/menu-items}">Menu Items</a></li>
+                    <li><a th:href="@{/ingredients}">Ingredients</a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown"><span>Reservations</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/group-reservations}">Group Reservations</a></li>
+                    <li><a th:href="@{/attendance}">Meal Attendance</a></li>
+                </ul>
+            </li>
+            <li><a th:href="@{/purchase-lists}">Purchasing</a></li>
+            <li><a th:href="@{/dashboard}">Dashboard</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+        <div class="page-header">
+            <h1 th:text="${reservation.groupName}">Group Name</h1>
+            <div class="actions">
+                <a th:href="@{/group-reservations/{id}/edit(id=${reservation.groupReservationId})}" class="btn btn-secondary">Edit</a>
+                <a th:href="@{/group-reservations}" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+
+        <div class="card mb-2">
+            <p><strong>Arrival:</strong> <span th:text="${#temporals.format(reservation.arrivalDate, 'EEEE, MMM d, yyyy')}"></span></p>
+            <p><strong>Departure:</strong> <span th:text="${#temporals.format(reservation.departureDate, 'EEEE, MMM d, yyyy')}"></span></p>
+            <p><strong>Default Counts:</strong>
+                <span th:text="${reservation.defaultAdultCount}"></span> Adults,
+                <span th:text="${reservation.defaultYouthCount}"></span> Youth,
+                <span th:text="${reservation.defaultKidCount}"></span> Kids,
+                <span th:text="${reservation.defaultCodeCount}"></span> Code,
+                <span th:text="${reservation.defaultCustomDietCount}"></span> Custom Diet
+            </p>
+            <p th:if="${reservation.customDietNotes}"><strong>Custom Diet Notes:</strong> <span th:text="${reservation.customDietNotes}"></span></p>
+            <p th:if="${reservation.notes}"><strong>Notes:</strong> <span th:text="${reservation.notes}"></span></p>
+        </div>
+
+        <h2 class="mb-1">Meal Attendance by Day</h2>
+        <p class="text-muted mb-1">Click on any attendance record to override the headcounts for that specific meal.</p>
+
+        <div th:if="${reservation.groupMealAttendances.empty}" class="empty-state">
+            <p>No meal attendance records found.</p>
+        </div>
+
+        <div th:unless="${reservation.groupMealAttendances.empty}" class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Meal</th>
+                        <th>Adults</th>
+                        <th>Youth</th>
+                        <th>Kids</th>
+                        <th>Code</th>
+                        <th>Custom</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="att : ${reservation.groupMealAttendances}">
+                        <td th:text="${#temporals.format(att.mealPeriod.eventDay.date, 'EEE, MMM d')}"></td>
+                        <td th:text="${att.mealPeriod.mealPeriodType}"></td>
+                        <td th:text="${att.adultCount}"></td>
+                        <td th:text="${att.youthCount}"></td>
+                        <td th:text="${att.kidCount}"></td>
+                        <td th:text="${att.codeCount}"></td>
+                        <td th:text="${att.customDietCount}"></td>
+                        <td>
+                            <a th:href="@{/attendance/{id}/edit(id=${att.groupMealAttendanceId})}" class="btn btn-sm btn-secondary">Override</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer class="footer"><p>Event Meal Planner v2 - Testing Interface</p></footer>
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

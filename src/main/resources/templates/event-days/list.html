@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Event Days - Event Meal Planner</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand"><a th:href="@{/}">Event Meal Planner v2</a></div>
+        <ul class="nav-links">
+            <li class="nav-dropdown"><span>Planning</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/meal-plans}">Meal Plans</a></li>
+                    <li><a th:href="@{/event-days}">Event Days</a></li>
+                    <li><a th:href="@{/kitchen-prep}">Kitchen Prep</a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown"><span>Catalog</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/menus}">Menus</a></li>
+                    <li><a th:href="@{/menu-items}">Menu Items</a></li>
+                    <li><a th:href="@{/ingredients}">Ingredients</a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown"><span>Reservations</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/group-reservations}">Group Reservations</a></li>
+                    <li><a th:href="@{/attendance}">Meal Attendance</a></li>
+                </ul>
+            </li>
+            <li><a th:href="@{/purchase-lists}">Purchasing</a></li>
+            <li><a th:href="@{/dashboard}">Dashboard</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+        <div class="page-header">
+            <h1>Event Days</h1>
+        </div>
+
+        <div th:if="${eventDaysWithGroups.empty}" class="empty-state">
+            <p>No event days found. Create a meal plan to generate event days.</p>
+            <a th:href="@{/meal-plans/new}" class="btn btn-primary">Create Meal Plan</a>
+        </div>
+
+        <div th:unless="${eventDaysWithGroups.empty}" class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Meal Plan</th>
+                        <th>Groups</th>
+                        <th>Breakfast</th>
+                        <th>Lunch</th>
+                        <th>Dinner</th>
+                        <th>Notes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${eventDaysWithGroups}">
+                        <td th:text="${#temporals.format(item.eventDay.date, 'EEE, MMM d, yyyy')}"></td>
+                        <td th:text="${item.eventDay.mealPlan != null ? item.eventDay.mealPlan.name : 'Standalone'}"></td>
+                        <td>
+                            <span th:if="${item.groups.empty}" class="text-muted">-</span>
+                            <span th:unless="${item.groups.empty}">
+                                <span th:text="${item.groups.size()}"></span>
+                                <span class="text-muted" th:title="${#strings.listJoin(item.groups.![groupName], ', ')}">
+                                    (<span th:each="group, stat : ${item.groups}" th:text="${group.groupName + (stat.last ? '' : ', ')}"></span>)
+                                </span>
+                            </span>
+                        </td>
+                        <td th:each="period : ${item.eventDay.mealPeriods}" th:if="${period.mealPeriodType.name() == 'BREAKFAST'}">
+                            <span th:if="${period.menu != null}" th:text="${period.menu.menuName}"></span>
+                            <span th:unless="${period.menu != null}" class="text-muted">-</span>
+                        </td>
+                        <td th:each="period : ${item.eventDay.mealPeriods}" th:if="${period.mealPeriodType.name() == 'LUNCH'}">
+                            <span th:if="${period.menu != null}" th:text="${period.menu.menuName}"></span>
+                            <span th:unless="${period.menu != null}" class="text-muted">-</span>
+                        </td>
+                        <td th:each="period : ${item.eventDay.mealPeriods}" th:if="${period.mealPeriodType.name() == 'DINNER'}">
+                            <span th:if="${period.menu != null}" th:text="${period.menu.menuName}"></span>
+                            <span th:unless="${period.menu != null}" class="text-muted">-</span>
+                        </td>
+                        <td th:text="${item.eventDay.notes != null ? item.eventDay.notes : '-'}"></td>
+                        <td>
+                            <a th:href="@{/event-days/{id}(id=${item.eventDay.eventDayId})}" class="btn btn-sm btn-primary">View</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer class="footer"><p>Event Meal Planner v2 - Testing Interface</p></footer>
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

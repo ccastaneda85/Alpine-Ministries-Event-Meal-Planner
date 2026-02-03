@@ -2,75 +2,67 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menus - Retreat Meal Manager</title>
+    <title>Menus - Event Meal Planner</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
     <nav class="navbar">
-        <div class="nav-brand">
-            <a th:href="@{/}">Retreat Meal Manager</a>
-        </div>
-        <ul class="nav-menu">
-            <li><a th:href="@{/}">Home</a></li>
-            <li><a th:href="@{/sessions}">Sessions</a></li>
-            <li><a th:href="@{/menus}" class="active">Menus</a></li>
-            <li><a th:href="@{/menus/ingredients}">Ingredients</a></li>
+        <div class="nav-brand"><a th:href="@{/}">Event Meal Planner v2</a></div>
+        <ul class="nav-links">
+            <li class="nav-dropdown"><span>Planning</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/meal-plans}">Meal Plans</a></li>
+                    <li><a th:href="@{/event-days}">Event Days</a></li>
+                    <li><a th:href="@{/kitchen-prep}">Kitchen Prep</a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown"><span>Catalog</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/menus}">Menus</a></li>
+                    <li><a th:href="@{/menu-items}">Menu Items</a></li>
+                    <li><a th:href="@{/ingredients}">Ingredients</a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown"><span>Reservations</span>
+                <ul class="dropdown-menu">
+                    <li><a th:href="@{/group-reservations}">Group Reservations</a></li>
+                    <li><a th:href="@{/attendance}">Meal Attendance</a></li>
+                </ul>
+            </li>
+            <li><a th:href="@{/purchase-lists}">Purchasing</a></li>
+            <li><a th:href="@{/dashboard}">Dashboard</a></li>
         </ul>
     </nav>
 
-    <div class="container">
-        <main>
-            <div class="page-header">
-                <h1>Menus</h1>
-                <a th:href="@{/menus/new}" class="btn btn-primary">Create New Menu</a>
-            </div>
+    <main class="container">
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
 
-            <div class="menus-grid">
-                <div th:if="${menus.isEmpty()}" class="empty-state">
-                    <p>No menus found. Create your first menu to get started!</p>
-                </div>
+        <div class="page-header">
+            <h1>Menus</h1>
+            <a th:href="@{/menus/new}" class="btn btn-success">+ New Menu</a>
+        </div>
 
-                <div th:each="menu : ${menus}" class="card menu-card">
-                    <div class="card-header">
-                        <h3 th:text="${menu.menuName}">Menu Name</h3>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted" th:if="${menu.menuItems.isEmpty()}">No items added yet</p>
-                        <ul class="menu-items-list" th:unless="${menu.menuItems.isEmpty()}">
-                            <li th:each="item : ${menu.menuItems}" th:text="${item.menuItemName}">Item</li>
-                        </ul>
-                    </div>
-                    <div class="card-footer">
-                        <a th:href="@{/menus/{id}(id=${menu.menuId})}" class="btn btn-sm btn-primary">View Details</a>
-                        <button class="btn btn-sm btn-danger"
-                                th:onclick="'deleteMenu(' + ${menu.menuId} + ')'">Delete</button>
-                    </div>
+        <div th:if="${menus.empty}" class="empty-state">
+            <p>No menus found.</p>
+            <a th:href="@{/menus/new}" class="btn btn-primary">Create your first menu</a>
+        </div>
+
+        <div th:unless="${menus.empty}" class="card-grid">
+            <div th:each="menu : ${menus}" class="card">
+                <h3 th:text="${menu.menuName}"></h3>
+                <p><span th:text="${menu.menuEntries.size()}"></span> items</p>
+                <div class="card-actions">
+                    <a th:href="@{/menus/{id}(id=${menu.menuId})}" class="btn btn-sm btn-primary">View</a>
+                    <a th:href="@{/menus/{id}/edit(id=${menu.menuId})}" class="btn btn-sm btn-secondary">Edit</a>
+                    <form th:action="@{/menus/{id}/delete(id=${menu.menuId})}" method="post" style="display:inline" data-confirm="Delete this menu?">
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
                 </div>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 
-    <footer class="footer">
-        <p>&copy; 2025 Retreat Meal Manager</p>
-    </footer>
-
+    <footer class="footer"><p>Event Meal Planner v2 - Testing Interface</p></footer>
     <script th:src="@{/js/main.js}"></script>
-    <script>
-        function deleteMenu(menuId) {
-            if (confirm('Are you sure you want to delete this menu?')) {
-                fetch('/api/menus/' + menuId, {
-                    method: 'DELETE'
-                })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.reload();
-                    } else {
-                        alert('Failed to delete menu');
-                    }
-                });
-            }
-        }
-    </script>
 </body>
 </html>
