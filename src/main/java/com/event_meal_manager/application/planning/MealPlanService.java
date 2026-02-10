@@ -39,6 +39,7 @@ public class MealPlanService {
             .eventDays(new ArrayList<>())
             .build();
 
+        mealPlan = mealPlanRepository.save(mealPlan);
         initializeEventDays(mealPlan, startDate, endDate);
         return mealPlanRepository.save(mealPlan);
     }

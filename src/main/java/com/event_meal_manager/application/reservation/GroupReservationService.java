@@ -14,8 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -66,10 +68,15 @@ public class GroupReservationService {
     @Transactional
     public GroupReservation update(Long id, String groupName, int defaultAdultCount, int defaultYouthCount,
                                     int defaultKidCount, int defaultCodeCount, int defaultCustomDietCount,
+                                    LocalDate arrivalDate, LocalDate departureDate,
                                     String customDietNotes, String notes) {
 
         GroupReservation reservation = groupReservationRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("GroupReservation not found: " + id));
+        
+        if (!reservation.getArrivalDate().equals(arrivalDate) || !reservation.getDepartureDate().equals(departureDate)) {
+        updateDates(reservation, arrivalDate, departureDate);
+        }
 
         reservation.setGroupName(groupName);
         reservation.setDefaultAdultCount(defaultAdultCount);
@@ -130,4 +137,56 @@ public class GroupReservationService {
 
         return eventDayRepository.save(eventDay);
     }
+
+    @Transactional
+    public void updateDates(GroupReservation reservation, LocalDate newArrivalDate, LocalDate newDepartureDate) {
+        Set<LocalDate> oldDates = new HashSet<>();
+        LocalDate current = reservation.getArrivalDate();
+        while (!current.isAfter(reservation.getDepartureDate())) {
+          oldDates.add(current);
+          current = current.plusDays(1);
+        }
+
+        Set<LocalDate> newDates = new HashSet<>();
+        current = newArrivalDate;
+        while (!current.isAfter(newDepartureDate)) {
+          newDates.add(current);
+          current = current.plusDays(1);
+        }
+
+        // Dates that were in the old range but not in the new — delete their attendance
+        Set<LocalDate> datesToRemove = new HashSet<>(oldDates);
+        datesToRemove.removeAll(newDates);
+
+        // Dates that are in the new range but weren't in the old — create attendance
+        Set<LocalDate> datesToAdd = new HashSet<>(newDates);
+        datesToAdd.removeAll(oldDates);
+
+        for (LocalDate date : datesToRemove) {
+          groupMealAttendanceRepository.deleteByGroupReservationGroupReservationIdAndMealPeriodEventDayDate(
+              reservation.getGroupReservationId(), date);
+        }
+
+        for (LocalDate date : datesToAdd) {
+            EventDay eventDay = eventDayRepository.findFirstByDate(date)
+                .orElseGet(() -> createEventDayWithMealPeriods(date));
+
+            for (MealPeriod mealPeriod : eventDay.getMealPeriods()) {
+                GroupMealAttendance attendance = GroupMealAttendance.builder()
+                  .groupReservation(reservation)
+                  .mealPeriod(mealPeriod)
+                  .adultCount(reservation.getDefaultAdultCount())
+                  .youthCount(reservation.getDefaultYouthCount())
+                  .kidCount(reservation.getDefaultKidCount())
+                  .codeCount(reservation.getDefaultCodeCount())
+                  .customDietCount(reservation.getDefaultCustomDietCount())
+                  .build();
+              groupMealAttendanceRepository.save(attendance);
+            }
+        }
+
+        reservation.setArrivalDate(newArrivalDate);
+        reservation.setDepartureDate(newDepartureDate);
+    }
+    
 }

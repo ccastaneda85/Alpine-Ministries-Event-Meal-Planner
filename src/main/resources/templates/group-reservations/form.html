@@ -46,7 +46,7 @@
                     <input type="text" id="groupName" name="groupName" th:value="${reservation.groupName}" required placeholder="e.g., Church Youth Group, Family Camp">
                 </div>
 
-                <div th:if="${reservation.groupReservationId == null}" class="form-row">
+                <div class="form-row">
                     <div class="form-group">
                         <label for="arrivalDate">Arrival Date</label>
                         <input type="date" id="arrivalDate" name="arrivalDate" th:value="${reservation.arrivalDate}" required>
