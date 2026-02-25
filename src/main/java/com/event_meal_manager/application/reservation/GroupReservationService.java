@@ -1,5 +1,6 @@
 package com.event_meal_manager.application.reservation;
 
+import com.event_meal_manager.application.planning.EventDayService;
 import com.event_meal_manager.domain.planning.EventDay;
 import com.event_meal_manager.domain.planning.MealPeriod;
 import com.event_meal_manager.domain.planning.MealPeriodType;
@@ -26,6 +27,7 @@ public class GroupReservationService {
     private final GroupReservationRepository groupReservationRepository;
     private final GroupMealAttendanceRepository groupMealAttendanceRepository;
     private final EventDayRepository eventDayRepository;
+    private final EventDayService eventDayService;
 
     public List<GroupReservation> findAll() {
         return groupReservationRepository.findAll();
@@ -74,8 +76,9 @@ public class GroupReservationService {
         GroupReservation reservation = groupReservationRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("GroupReservation not found: " + id));
         
-        if (!reservation.getArrivalDate().equals(arrivalDate) || !reservation.getDepartureDate().equals(departureDate)) {
-        updateDates(reservation, arrivalDate, departureDate);
+        boolean datesChanged = !reservation.getArrivalDate().equals(arrivalDate) || !reservation.getDepartureDate().equals(departureDate);
+        if (datesChanged) {
+            updateDates(reservation, arrivalDate, departureDate);
         }
 
         reservation.setGroupName(groupName);
@@ -87,12 +90,19 @@ public class GroupReservationService {
         reservation.setCustomDietNotes(customDietNotes);
         reservation.setNotes(notes);
 
-        return groupReservationRepository.save(reservation);
+        GroupReservation saved = groupReservationRepository.save(reservation);
+
+        if (datesChanged) {
+            eventDayService.deleteOrphanedEventDays();
+        }
+
+        return saved;
     }
 
     @Transactional
     public void delete(Long id) {
         groupReservationRepository.deleteById(id);
+        eventDayService.deleteOrphanedEventDays();
     }
 
     private void initializeAttendance(GroupReservation reservation) {

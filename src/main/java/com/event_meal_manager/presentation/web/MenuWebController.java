@@ -43,6 +43,7 @@ public class MenuWebController {
         Menu menu = menuService.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Menu not found"));
         model.addAttribute("menu", menu);
+        model.addAttribute("menuEntries", menuEntryService.findByMenuId(id));
         model.addAttribute("menuItems", menuItemService.findAll());
         return "menus/view";
     }

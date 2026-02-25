@@ -84,6 +84,17 @@ public class EventDayService {
         eventDayRepository.deleteById(id);
     }
 
+    public List<EventDay> findOrphanedEventDays() {
+        return eventDayRepository.findOrphanedEventDays();
+    }
+
+    @Transactional
+    public int deleteOrphanedEventDays() {
+        List<EventDay> orphaned = eventDayRepository.findOrphanedEventDays();
+        eventDayRepository.deleteAll(orphaned);
+        return orphaned.size();
+    }
+
     public List<GroupReservation> getGroupsForEventDay(Long eventDayId) {
         return groupMealAttendanceRepository.findByMealPeriodEventDayEventDayId(eventDayId).stream()
             .map(GroupMealAttendance::getGroupReservation)

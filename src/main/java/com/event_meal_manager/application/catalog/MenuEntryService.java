@@ -21,8 +21,14 @@ public class MenuEntryService {
     private final MenuRepository menuRepository;
     private final MenuItemRepository menuItemRepository;
 
+    @Transactional(readOnly = true)
     public List<MenuEntry> findByMenuId(Long menuId) {
-        return menuEntryRepository.findByMenuMenuIdOrderByDisplayOrderAsc(menuId);
+        List<MenuEntry> entries = menuEntryRepository.findByMenuMenuIdOrderByDisplayOrderAsc(menuId);
+        // Force-initialize menuItem for each entry within this transaction
+        entries.forEach(e -> {
+            if (e.getMenuItem() != null) e.getMenuItem().getMenuItemName();
+        });
+        return entries;
     }
 
     public Optional<MenuEntry> findById(Long id) {

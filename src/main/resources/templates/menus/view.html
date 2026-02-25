@@ -66,11 +66,11 @@
         </div>
 
         <h2 class="mb-1">Menu Items</h2>
-        <div th:if="${menu.menuEntries.empty}" class="empty-state">
+        <div th:if="${menuEntries.empty}" class="empty-state">
             <p>No items in this menu yet.</p>
         </div>
 
-        <div th:unless="${menu.menuEntries.empty}" class="table-container">
+        <div th:unless="${menuEntries.empty}" class="table-container">
             <table>
                 <thead>
                     <tr>
@@ -81,7 +81,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr th:each="entry : ${menu.menuEntries}">
+                    <tr th:each="entry : ${menuEntries}">
                         <td th:text="${entry.displayOrder}"></td>
                         <td>
                             <a th:href="@{/menu-items/{id}(id=${entry.menuItem.menuItemId})}" th:text="${entry.menuItem.menuItemName}"></a>
