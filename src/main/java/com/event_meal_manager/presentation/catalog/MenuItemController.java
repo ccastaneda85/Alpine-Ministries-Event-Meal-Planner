@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/menu-items")
@@ -29,9 +30,13 @@ public class MenuItemController {
     }
 
     @GetMapping("/search")
-    public List<MenuItem> search(@RequestParam String name) {
-        return menuItemService.search(name);
+    public List<MenuItemSearchResult> search(@RequestParam String name) {
+        return menuItemService.search(name).stream()
+            .map(item -> new MenuItemSearchResult(item.getMenuItemId(), item.getMenuItemName()))
+            .collect(Collectors.toList());
     }
+
+    public record MenuItemSearchResult(Long menuItemId, String menuItemName) {}
 
     @PostMapping
     public ResponseEntity<MenuItem> create(@RequestBody CreateMenuItemRequest request) {

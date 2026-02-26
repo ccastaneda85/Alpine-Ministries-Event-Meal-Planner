@@ -14,6 +14,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -52,6 +54,37 @@ public class MealPlanService {
         mealPlan.setName(name);
         mealPlan.setStartDate(startDate);
         mealPlan.setEndDate(endDate);
+
+        // Remove event days that fall outside the new date range
+        mealPlan.getEventDays().removeIf(day ->
+            day.getDate().isBefore(startDate) || day.getDate().isAfter(endDate));
+
+        // Add event days for any dates in the new range not already present
+        Set<LocalDate> existingDates = mealPlan.getEventDays().stream()
+            .map(EventDay::getDate)
+            .collect(Collectors.toSet());
+
+        LocalDate current = startDate;
+        while (!current.isAfter(endDate)) {
+            if (!existingDates.contains(current)) {
+                final LocalDate date = current;
+                Optional<EventDay> existingDay = eventDayRepository.findFirstByDate(date);
+                if (existingDay.isPresent() && existingDay.get().getMealPlan() == null) {
+                    EventDay existing = existingDay.get();
+                    existing.setMealPlan(mealPlan);
+                    mealPlan.getEventDays().add(existing);
+                } else if (existingDay.isEmpty()) {
+                    EventDay eventDay = EventDay.builder()
+                        .date(date)
+                        .mealPlan(mealPlan)
+                        .mealPeriods(new ArrayList<>())
+                        .build();
+                    initializeMealPeriods(eventDay);
+                    mealPlan.getEventDays().add(eventDay);
+                }
+            }
+            current = current.plusDays(1);
+        }
 
         return mealPlanRepository.save(mealPlan);
     }

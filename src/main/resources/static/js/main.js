@@ -154,6 +154,78 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 })();
 
+// Menu item autocomplete
+(function () {
+    const searchInput = document.getElementById('menu-item-search');
+    if (!searchInput) return;
+
+    const hiddenInput = document.getElementById('menuItemId');
+    const suggestionsBox = document.getElementById('menu-item-suggestions');
+
+    let debounceTimer = null;
+
+    function showSuggestions(items) {
+        suggestionsBox.innerHTML = '';
+        if (items.length === 0) {
+            const hint = document.createElement('div');
+            hint.className = 'suggestion-hint';
+            hint.textContent = 'No results found';
+            suggestionsBox.appendChild(hint);
+        } else {
+            items.forEach(function (item) {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.textContent = item.menuItemName;
+                div.addEventListener('mousedown', function (e) {
+                    e.preventDefault();
+                    searchInput.value = item.menuItemName;
+                    hiddenInput.value = item.menuItemId;
+                    hiddenInput.setCustomValidity('');
+                    suggestionsBox.style.display = 'none';
+                });
+                suggestionsBox.appendChild(div);
+            });
+        }
+        suggestionsBox.style.display = 'block';
+    }
+
+    searchInput.addEventListener('input', function () {
+        const term = searchInput.value.trim();
+        hiddenInput.value = '';
+        clearTimeout(debounceTimer);
+        if (term.length < 2) {
+            suggestionsBox.style.display = 'none';
+            return;
+        }
+        debounceTimer = setTimeout(function () {
+            fetch('/api/menu-items/search?name=' + encodeURIComponent(term))
+                .then(function (r) { return r.json(); })
+                .then(showSuggestions)
+                .catch(function () { suggestionsBox.style.display = 'none'; });
+        }, 200);
+    });
+
+    searchInput.addEventListener('blur', function () {
+        setTimeout(function () { suggestionsBox.style.display = 'none'; }, 150);
+    });
+
+    searchInput.addEventListener('focus', function () {
+        if (searchInput.value.trim().length >= 2 && suggestionsBox.innerHTML) {
+            suggestionsBox.style.display = 'block';
+        }
+    });
+
+    searchInput.closest('form').addEventListener('submit', function (e) {
+        if (!hiddenInput.value) {
+            hiddenInput.setCustomValidity('Please select a menu item from the list.');
+            hiddenInput.reportValidity();
+            e.preventDefault();
+        } else {
+            hiddenInput.setCustomValidity('');
+        }
+    });
+})();
+
 // Format dates for display
 function formatDate(dateString) {
     if (!dateString) return '';

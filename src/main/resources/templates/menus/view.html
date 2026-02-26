@@ -36,6 +36,7 @@
 
     <main class="container">
         <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
 
         <div class="page-header">
             <h1 th:text="${menu.menuName}">Menu Name</h1>
@@ -50,11 +51,14 @@
             <form th:action="@{/menus/{id}/entries(id=${menu.menuId})}" method="post">
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="menuItemId">Menu Item</label>
-                        <select id="menuItemId" name="menuItemId" required>
-                            <option value="">-- Select Item --</option>
-                            <option th:each="item : ${menuItems}" th:value="${item.menuItemId}" th:text="${item.menuItemName}"></option>
-                        </select>
+                        <label for="menu-item-search">Menu Item</label>
+                        <div class="menu-item-autocomplete">
+                            <div style="position:relative;">
+                                <input type="text" id="menu-item-search" placeholder="Type to search menu items..." autocomplete="off">
+                                <div id="menu-item-suggestions" class="menu-item-suggestions" style="display:none;"></div>
+                            </div>
+                            <input type="hidden" id="menuItemId" name="menuItemId" required>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="displayOrder">Display Order</label>

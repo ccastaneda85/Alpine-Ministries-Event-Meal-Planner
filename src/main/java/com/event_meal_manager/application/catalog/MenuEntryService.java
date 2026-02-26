@@ -43,6 +43,10 @@ public class MenuEntryService {
         MenuItem menuItem = menuItemRepository.findById(menuItemId)
             .orElseThrow(() -> new IllegalArgumentException("MenuItem not found: " + menuItemId));
 
+        if (menuEntryRepository.existsByMenuMenuIdAndMenuItemMenuItemId(menuId, menuItemId)) {
+            throw new IllegalStateException("'" + menuItem.getMenuItemName() + "' is already on this menu.");
+        }
+
         MenuEntry entry = MenuEntry.builder()
             .menu(menu)
             .menuItem(menuItem)
