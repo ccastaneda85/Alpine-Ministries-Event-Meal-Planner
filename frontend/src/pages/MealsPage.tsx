@@ -1,7 +1,11 @@
+import MealPlanHeader from "../components/MealPlanHeader/MealPlanHeader";
+import MealPlanTable from "../components/MealPlanTable/MealPlanTable";
+
 export default function MealsPage() {
   return (
-    <h1 className="font-actor text-[34px] tracking-[-0.68px] text-black leading-[1.1] m-0">
-      Meals
-    </h1>
+    <div className="flex flex-col gap-[12px] pt-[10px]">
+      <MealPlanHeader />
+      <MealPlanTable />
+    </div>
   );
 }

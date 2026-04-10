@@ -34,12 +34,6 @@ export default function CalendarHeader() {
 
   return (
     <div className="flex flex-col">
-      <h1 className="font-actor text-[34px] tracking-[-0.68px] text-black leading-[1.1] m-0">
-        Alpine Retreat Meal Planner
-      </h1>
-
-      <hr className="w-full border-0 border-t border-border mt-[30px]" />
-
       <div className="flex items-center justify-between py-[16px]">
         <MonthNavigator onPrev={handlePrev} onNext={handleNext} />
 
