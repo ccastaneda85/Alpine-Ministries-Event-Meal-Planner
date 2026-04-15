@@ -1,7 +1,6 @@
 package com.event_meal_manager.presentation.web;
 
 import com.event_meal_manager.application.catalog.MenuEntryService;
-import com.event_meal_manager.application.catalog.MenuItemService;
 import com.event_meal_manager.application.catalog.MenuService;
 import com.event_meal_manager.domain.catalog.Menu;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +15,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class MenuWebController {
 
     private final MenuService menuService;
-    private final MenuItemService menuItemService;
     private final MenuEntryService menuEntryService;
 
     @GetMapping
@@ -43,7 +41,7 @@ public class MenuWebController {
         Menu menu = menuService.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Menu not found"));
         model.addAttribute("menu", menu);
-        model.addAttribute("menuItems", menuItemService.findAll());
+        model.addAttribute("menuEntries", menuEntryService.findByMenuId(id));
         return "menus/view";
     }
 
@@ -74,8 +72,12 @@ public class MenuWebController {
                            @RequestParam Long menuItemId,
                            @RequestParam(defaultValue = "0") Integer displayOrder,
                            RedirectAttributes redirectAttributes) {
-        menuEntryService.addMenuItemToMenu(id, menuItemId, displayOrder);
-        redirectAttributes.addFlashAttribute("successMessage", "Item added to menu!");
+        try {
+            menuEntryService.addMenuItemToMenu(id, menuItemId, displayOrder);
+            redirectAttributes.addFlashAttribute("successMessage", "Item added to menu!");
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/menus/" + id;
     }
 

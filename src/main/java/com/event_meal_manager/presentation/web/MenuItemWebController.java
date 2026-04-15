@@ -1,6 +1,5 @@
 package com.event_meal_manager.presentation.web;
 
-import com.event_meal_manager.application.catalog.IngredientService;
 import com.event_meal_manager.application.catalog.MenuItemRecipeService;
 import com.event_meal_manager.application.catalog.MenuItemService;
 import com.event_meal_manager.domain.catalog.MenuItem;
@@ -16,7 +15,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class MenuItemWebController {
 
     private final MenuItemService menuItemService;
-    private final IngredientService ingredientService;
     private final MenuItemRecipeService menuItemRecipeService;
 
     @GetMapping
@@ -43,7 +41,6 @@ public class MenuItemWebController {
         MenuItem menuItem = menuItemService.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Menu item not found"));
         model.addAttribute("menuItem", menuItem);
-        model.addAttribute("ingredients", ingredientService.findAll());
         return "menu-items/view";
     }
 

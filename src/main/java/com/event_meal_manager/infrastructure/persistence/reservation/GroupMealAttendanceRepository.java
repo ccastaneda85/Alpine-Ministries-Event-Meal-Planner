@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
 
 @Repository
 public interface GroupMealAttendanceRepository extends JpaRepository<GroupMealAttendance, Long> {
@@ -17,4 +18,6 @@ public interface GroupMealAttendanceRepository extends JpaRepository<GroupMealAt
     List<GroupMealAttendance> findByMealPeriodEventDayEventDayId(Long eventDayId);
 
     Optional<GroupMealAttendance> findByGroupReservationGroupReservationIdAndMealPeriodMealPeriodId(Long groupReservationId, Long mealPeriodId);
+
+    void deleteByGroupReservationGroupReservationIdAndMealPeriodEventDayDate(Long groupReservationId, LocalDate date);
 }
