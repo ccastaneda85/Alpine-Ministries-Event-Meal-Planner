@@ -10,4 +10,6 @@ import java.util.List;
 public interface IngredientRepository extends JpaRepository<Ingredient, Long> {
 
     List<Ingredient> findByIngredientNameContainingIgnoreCase(String ingredientName);
+
+    List<Ingredient> findAllByOrderByIngredientNameAsc();
 }

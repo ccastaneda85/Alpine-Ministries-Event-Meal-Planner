@@ -17,7 +17,7 @@ public class IngredientService {
     private final IngredientRepository ingredientRepository;
 
     public List<Ingredient> findAll() {
-        return ingredientRepository.findAll();
+        return ingredientRepository.findAllByOrderByIngredientNameAsc();
     }
 
     public Optional<Ingredient> findById(Long id) {
