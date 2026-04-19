@@ -41,6 +41,7 @@
         <div class="page-header">
             <h1>Kitchen Prep - <span th:text="${#temporals.format(prepList.eventDay.date, 'EEEE, MMM d')}"></span></h1>
             <div style="display:flex; gap:0.5rem;">
+                <button type="button" onclick="document.getElementById('addItemModal').classList.add('open')" class="btn btn-success no-print">+ Add Item</button>
                 <button onclick="window.print()" class="btn btn-secondary no-print">Print / Save as PDF</button>
                 <a th:href="@{/kitchen-prep}" class="btn btn-secondary no-print">Back to List</a>
             </div>
@@ -59,14 +60,17 @@
         </div>
 
         <!-- Prep List Notes -->
-        <div class="card mb-2 no-print">
-            <h3>Prep List Notes</h3>
-            <form th:action="@{/kitchen-prep/{id}/notes(id=${prepList.kitchenPrepListId})}" method="post">
-                <div class="form-group">
-                    <textarea name="notes" rows="3" th:text="${prepList.notes}" placeholder="Add prep notes..."></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary btn-sm">Save Notes</button>
-            </form>
+        <div class="card mb-2 no-print prep-list-notes-bar">
+            <span class="notes-label">Notes:</span>
+            <span th:if="${prepList.notes != null and !#strings.isEmpty(prepList.notes)}"
+                  class="prep-list-notes-text"
+                  th:text="${prepList.notes}"></span>
+            <span th:if="${prepList.notes == null or #strings.isEmpty(prepList.notes)}"
+                  class="prep-list-notes-empty">No notes</span>
+            <button type="button" class="btn btn-sm btn-secondary"
+                    th:onclick="'openPrepNotesModal(\'' + ${prepList.kitchenPrepListId} + '\', \'' + (${prepList.notes} ?: '') + '\')'">
+                <span th:text="${prepList.notes != null and !#strings.isEmpty(prepList.notes)} ? 'Edit' : 'Add Notes'"></span>
+            </button>
         </div>
 
         <!-- Grouped Prep Items by Meal Period -->
@@ -139,48 +143,6 @@
             </div>
         </div>
 
-        <!-- Add Manual Item -->
-        <h2 class="mb-1 no-print">Add Item Manually</h2>
-        <div class="form-container mb-2 no-print">
-            <form th:action="@{/kitchen-prep/{id}/items(id=${prepList.kitchenPrepListId})}" method="post">
-                <div class="form-group">
-                    <label for="mealPeriodId">Meal Period</label>
-                    <select id="mealPeriodId" name="mealPeriodId" required>
-                        <option value="">-- Select Meal Period --</option>
-                        <option th:each="mp : ${mealPeriods}"
-                                th:value="${mp.mealPeriodId}"
-                                th:text="${mp.mealPeriodType}"></option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="menuItemName">Item Name / Description</label>
-                    <input type="text" id="menuItemName" name="menuItemName" required placeholder="e.g., Thaw chicken, Prep salad bar">
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="adultServings">Adult Servings</label>
-                        <input type="number" id="adultServings" name="adultServings" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="youthServings">Youth Servings</label>
-                        <input type="number" id="youthServings" name="youthServings" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="kidServings">Kid Servings</label>
-                        <input type="number" id="kidServings" name="kidServings" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="codeServings">Code Servings</label>
-                        <input type="number" id="codeServings" name="codeServings" value="0">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="notes">Notes</label>
-                    <input type="text" id="notes" name="notes" placeholder="Optional notes">
-                </div>
-                <button type="submit" class="btn btn-success">Add Item</button>
-            </form>
-        </div>
     </main>
 
     <footer class="footer no-print"><p>Event Meal Planner v2 - Testing Interface</p></footer>
@@ -190,6 +152,54 @@
         <button type="button" id="sdNotes" class="dropdown-action" data-action="notes">Edit Notes</button>
         <button type="button" id="sdEdit"  class="dropdown-action" data-action="edit">Edit Item</button>
         <button type="button" id="sdDelete" class="dropdown-action dropdown-action-danger" data-action="delete">Delete</button>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div id="addItemModal" class="modal-overlay no-print" onclick="if(event.target===this)closeModal('addItemModal')">
+        <div class="modal-box">
+            <h3>Add Item</h3>
+            <form th:action="@{/kitchen-prep/{id}/items(id=${prepList.kitchenPrepListId})}" method="post">
+                <div class="form-group">
+                    <label>Meal Period</label>
+                    <select name="mealPeriodId" required>
+                        <option value="">-- Select Meal Period --</option>
+                        <option th:each="mp : ${mealPeriods}"
+                                th:value="${mp.mealPeriodId}"
+                                th:text="${mp.mealPeriodType}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Item Name / Description</label>
+                    <input type="text" name="menuItemName" required placeholder="e.g., Thaw chicken, Prep salad bar">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Adult Servings</label>
+                        <input type="number" name="adultServings" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Youth Servings</label>
+                        <input type="number" name="youthServings" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Kid Servings</label>
+                        <input type="number" name="kidServings" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Code Servings</label>
+                        <input type="number" name="codeServings" value="0" min="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <input type="text" name="notes" placeholder="Optional notes">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" onclick="closeModal('addItemModal')" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-success">Add Item</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Edit Notes Modal -->
@@ -304,6 +314,12 @@
         window.openNotesModal = function (itemId, prepId, notes) {
             document.getElementById('notesInput').value = notes;
             document.getElementById('notesForm').action = '/kitchen-prep/' + prepId + '/items/' + itemId + '/notes';
+            document.getElementById('notesModal').classList.add('open');
+        };
+
+        window.openPrepNotesModal = function (prepId, notes) {
+            document.getElementById('notesInput').value = notes;
+            document.getElementById('notesForm').action = '/kitchen-prep/' + prepId + '/notes';
             document.getElementById('notesModal').classList.add('open');
         };
 

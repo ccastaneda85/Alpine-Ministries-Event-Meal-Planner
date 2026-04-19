@@ -585,3 +585,14 @@ tr:hover {
     justify-content: flex-end;
     margin-top: 1rem;
 }
+
+/* ── Prep list notes bar ─────────────────────────────────────────── */
+.prep-list-notes-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1rem;
+}
+.notes-label { font-weight: 600; white-space: nowrap; }
+.prep-list-notes-text { flex: 1; color: #333; font-size: 0.95rem; }
+.prep-list-notes-empty { flex: 1; color: #aaa; font-style: italic; font-size: 0.9rem; }
