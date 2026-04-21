@@ -11,6 +11,11 @@ export default function App() {
     <div className="flex min-h-screen bg-white">
       <Sidebar />
       <main className="ml-[256px] flex-1 px-[36px] pt-[35px]">
+        <h1 className="font-actor text-[34px] tracking-[-0.68px] text-black leading-[1.1] m-0">
+          Alpine Retreat Meal Planner
+        </h1>
+        <hr className="w-full border-0 border-t border-border mt-[30px]" />
+
         <Routes>
           <Route path="/" element={<CalendarPage />} />
           <Route path="/meals" element={<MealsPage />} />

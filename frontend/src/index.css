@@ -7,6 +7,9 @@
   --color-gold: #c58f2c;
   --color-border: #e0e0e0;
   --color-control-bg: #f7f7f7;
+  --color-table-header: #f5e9d4;
+  --color-table-border: #b59c9c;
+  --color-danger: #d74b4b;
 }
 
 body {
