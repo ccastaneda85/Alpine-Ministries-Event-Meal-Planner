@@ -1,5 +1,6 @@
 package com.event_meal_manager.domain.planning;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,10 +31,12 @@ public class EventDay {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meal_plan_id")
     private MealPlan mealPlan;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "eventDay", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<MealPeriod> mealPeriods = new ArrayList<>();

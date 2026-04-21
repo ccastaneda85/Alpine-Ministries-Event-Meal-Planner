@@ -60,7 +60,8 @@ public class KitchenPrepController {
             request.youthServings(),
             request.kidServings(),
             request.codeServings(),
-            request.notes()
+            request.notes(),
+            request.mealPeriodId()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(item);
     }
@@ -93,6 +94,6 @@ public class KitchenPrepController {
 
     public record UpdateNotesRequest(String notes) {}
     public record AddItemRequest(String menuItemName, Integer adultServings, Integer youthServings,
-                                  Integer kidServings, Integer codeServings, String notes) {}
+                                  Integer kidServings, Integer codeServings, String notes, Long mealPeriodId) {}
     public record UpdateStatusRequest(PrepItemStatus status) {}
 }

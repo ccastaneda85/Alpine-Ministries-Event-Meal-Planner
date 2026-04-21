@@ -17,4 +17,6 @@ public interface GroupMealAttendanceRepository extends JpaRepository<GroupMealAt
     List<GroupMealAttendance> findByMealPeriodEventDayEventDayId(Long eventDayId);
 
     Optional<GroupMealAttendance> findByGroupReservationGroupReservationIdAndMealPeriodMealPeriodId(Long groupReservationId, Long mealPeriodId);
+
+    List<GroupMealAttendance> findByGroupReservationGroupReservationIdAndMealPeriodEventDayDate(Long groupReservationId, java.time.LocalDate date);
 }

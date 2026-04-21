@@ -1,6 +1,7 @@
 package com.event_meal_manager.presentation.catalog;
 
 import com.event_meal_manager.application.catalog.MenuService;
+import com.event_meal_manager.application.catalog.MenuService.MenuItemSummary;
 import com.event_meal_manager.domain.catalog.Menu;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,11 @@ public class MenuController {
         return menuService.findById(id)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/items")
+    public ResponseEntity<List<MenuItemSummary>> getMenuItems(@PathVariable Long id) {
+        return ResponseEntity.ok(menuService.getMenuItems(id));
     }
 
     @GetMapping("/search")

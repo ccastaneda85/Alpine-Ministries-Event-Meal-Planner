@@ -3,8 +3,11 @@ package com.event_meal_manager.presentation.reservation;
 import com.event_meal_manager.application.reservation.GroupMealAttendanceService;
 import com.event_meal_manager.domain.reservation.GroupMealAttendance;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 import java.util.List;
 
@@ -50,6 +53,14 @@ public class GroupMealAttendanceController {
             request.customDietCount()
         );
         return ResponseEntity.ok(attendance);
+    }
+
+    @DeleteMapping("/group-reservation/{groupId}/date/{date}")
+    public ResponseEntity<Void> deleteByGroupAndDate(
+            @PathVariable Long groupId,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        groupMealAttendanceService.deleteByGroupAndDate(groupId, date);
+        return ResponseEntity.noContent().build();
     }
 
     public record UpdateCountsRequest(

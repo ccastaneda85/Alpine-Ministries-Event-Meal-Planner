@@ -1,6 +1,8 @@
 package com.event_meal_manager.domain.reservation;
 
 import com.event_meal_manager.domain.planning.MealPeriod;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,10 +23,12 @@ public class GroupMealAttendance {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long groupMealAttendanceId;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_reservation_id", nullable = false)
     private GroupReservation groupReservation;
 
+    @JsonIgnoreProperties({"groupMealAttendances", "menu"})
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meal_period_id", nullable = false)
     private MealPeriod mealPeriod;

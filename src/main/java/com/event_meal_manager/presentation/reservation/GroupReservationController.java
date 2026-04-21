@@ -64,8 +64,11 @@ public class GroupReservationController {
             request.defaultKidCount(),
             request.defaultCodeCount(),
             request.defaultCustomDietCount(),
+            request.arrivalDate(),
+            request.departureDate(),
             request.customDietNotes(),
-            request.notes()
+            request.notes(),
+            request.resetAttendance()
         );
         return ResponseEntity.ok(reservation);
     }
@@ -96,7 +99,10 @@ public class GroupReservationController {
         int defaultKidCount,
         int defaultCodeCount,
         int defaultCustomDietCount,
+        LocalDate arrivalDate,
+        LocalDate departureDate,
         String customDietNotes,
-        String notes
+        String notes,
+        boolean resetAttendance
     ) {}
 }

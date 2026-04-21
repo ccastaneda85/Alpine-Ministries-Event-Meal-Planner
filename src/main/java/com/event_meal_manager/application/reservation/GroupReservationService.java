@@ -66,7 +66,8 @@ public class GroupReservationService {
     @Transactional
     public GroupReservation update(Long id, String groupName, int defaultAdultCount, int defaultYouthCount,
                                     int defaultKidCount, int defaultCodeCount, int defaultCustomDietCount,
-                                    String customDietNotes, String notes) {
+                                    LocalDate arrivalDate, LocalDate departureDate,
+                                    String customDietNotes, String notes, boolean resetAttendance) {
 
         GroupReservation reservation = groupReservationRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("GroupReservation not found: " + id));
@@ -77,15 +78,83 @@ public class GroupReservationService {
         reservation.setDefaultKidCount(defaultKidCount);
         reservation.setDefaultCodeCount(defaultCodeCount);
         reservation.setDefaultCustomDietCount(defaultCustomDietCount);
+        reservation.setArrivalDate(arrivalDate);
+        reservation.setDepartureDate(departureDate);
         reservation.setCustomDietNotes(customDietNotes);
         reservation.setNotes(notes);
 
-        return groupReservationRepository.save(reservation);
+        groupReservationRepository.save(reservation);
+
+        List<GroupMealAttendance> attendances = groupMealAttendanceRepository.findByGroupReservationGroupReservationId(id);
+
+        // Delete records outside the new date range
+        List<GroupMealAttendance> toDelete = attendances.stream()
+            .filter(a -> {
+                LocalDate date = a.getMealPeriod().getEventDay().getDate();
+                return date.isBefore(arrivalDate) || date.isAfter(departureDate);
+            })
+            .collect(java.util.stream.Collectors.toList());
+        groupMealAttendanceRepository.deleteAll(toDelete);
+
+        // Optionally reset counts on remaining records
+        List<GroupMealAttendance> toKeep = attendances.stream()
+            .filter(a -> {
+                LocalDate date = a.getMealPeriod().getEventDay().getDate();
+                return !date.isBefore(arrivalDate) && !date.isAfter(departureDate);
+            })
+            .collect(java.util.stream.Collectors.toList());
+        if (resetAttendance) {
+            for (GroupMealAttendance a : toKeep) {
+                a.setAdultCount(defaultAdultCount);
+                a.setYouthCount(defaultYouthCount);
+                a.setKidCount(defaultKidCount);
+                a.setCodeCount(defaultCodeCount);
+                a.setCustomDietCount(defaultCustomDietCount);
+                groupMealAttendanceRepository.save(a);
+            }
+        }
+
+        // Create attendance records for any newly added days
+        initializeAttendanceForRange(reservation, arrivalDate, departureDate, toKeep);
+
+        return reservation;
     }
 
     @Transactional
     public void delete(Long id) {
         groupReservationRepository.deleteById(id);
+    }
+
+    private void initializeAttendanceForRange(GroupReservation reservation,
+                                               LocalDate arrivalDate, LocalDate departureDate,
+                                               List<GroupMealAttendance> existing) {
+        // Collect meal period IDs that already have records so we don't duplicate
+        java.util.Set<Long> existingMealPeriodIds = existing.stream()
+            .map(a -> a.getMealPeriod().getMealPeriodId())
+            .collect(java.util.stream.Collectors.toSet());
+
+        LocalDate current = arrivalDate;
+        while (!current.isAfter(departureDate)) {
+            final LocalDate dateToProcess = current;
+            EventDay eventDay = eventDayRepository.findFirstByDate(dateToProcess)
+                .orElseGet(() -> createEventDayWithMealPeriods(dateToProcess));
+
+            for (MealPeriod mealPeriod : eventDay.getMealPeriods()) {
+                if (!existingMealPeriodIds.contains(mealPeriod.getMealPeriodId())) {
+                    GroupMealAttendance attendance = GroupMealAttendance.builder()
+                        .groupReservation(reservation)
+                        .mealPeriod(mealPeriod)
+                        .adultCount(reservation.getDefaultAdultCount())
+                        .youthCount(reservation.getDefaultYouthCount())
+                        .kidCount(reservation.getDefaultKidCount())
+                        .codeCount(reservation.getDefaultCodeCount())
+                        .customDietCount(reservation.getDefaultCustomDietCount())
+                        .build();
+                    groupMealAttendanceRepository.save(attendance);
+                }
+            }
+            current = current.plusDays(1);
+        }
     }
 
     private void initializeAttendance(GroupReservation reservation) {
