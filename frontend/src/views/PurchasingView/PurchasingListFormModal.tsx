@@ -11,14 +11,16 @@ function extractApiErrorMessage(err: unknown): string {
 
 interface Props {
   editing: MealPlan | null
+  defaultStartDate?: string
+  defaultEndDate?: string
   onClose: () => void
   onSaved: () => void
 }
 
-export default function PurchasingListFormModal({ editing, onClose, onSaved }: Props) {
+export default function PurchasingListFormModal({ editing, defaultStartDate, defaultEndDate, onClose, onSaved }: Props) {
   const [name, setName] = useState(editing?.name ?? '')
-  const [startDate, setStartDate] = useState(editing?.startDate ?? '')
-  const [endDate, setEndDate] = useState(editing?.endDate ?? '')
+  const [startDate, setStartDate] = useState(editing?.startDate ?? defaultStartDate ?? '')
+  const [endDate, setEndDate] = useState(editing?.endDate ?? defaultEndDate ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 

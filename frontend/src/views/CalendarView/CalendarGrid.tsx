@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, Calendar, User, ChefHat, ShoppingBasket } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { GroupReservation } from '../../types'
@@ -21,6 +22,7 @@ interface Props {
   onAddGroup: () => void
   onViewGroup: (group: GroupReservation) => void
   onOpenKitchenPrep: (date: string) => void
+  onRangeSelect: (start: string, end: string) => void
 }
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -64,8 +66,39 @@ function GroupBadge({ g, date, onViewGroup, onDateSelect }: {
 export default function CalendarGrid({
   year, month, selectedDate, reservations, dayIndicators,
   onDateSelect, onPrevMonth, onNextMonth, onToday, onAddGroup, onViewGroup, onOpenKitchenPrep,
+  onRangeSelect,
 }: Props) {
   const navigate = useNavigate()
+  const [dragStart, setDragStart] = useState<string | null>(null)
+  const [dragCurrent, setDragCurrent] = useState<string | null>(null)
+
+  // Commit the drag on document mouseup so releases outside the grid still fire.
+  useEffect(() => {
+    if (dragStart === null) return
+    function commit() {
+      const start = dragStart!
+      const cur = dragCurrent ?? start
+      const a = start <= cur ? start : cur
+      const b = start <= cur ? cur : start
+      setDragStart(null)
+      setDragCurrent(null)
+      if (a === b) {
+        onDateSelect(a)
+      } else {
+        onRangeSelect(a, b)
+      }
+    }
+    document.addEventListener('mouseup', commit)
+    return () => document.removeEventListener('mouseup', commit)
+  }, [dragStart, dragCurrent, onDateSelect, onRangeSelect])
+
+  function inDragRange(date: string): boolean {
+    if (!dragStart || !dragCurrent) return false
+    const a = dragStart <= dragCurrent ? dragStart : dragCurrent
+    const b = dragStart <= dragCurrent ? dragCurrent : dragStart
+    return date >= a && date <= b
+  }
+
   const d = new Date()
   const todayIso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   const firstDow = new Date(year, month, 1).getDay()
@@ -127,6 +160,7 @@ export default function CalendarGrid({
             const grandTotal = groups.reduce((sum, g) =>
               sum + g.defaultAdultCount + g.defaultYouthCount + g.defaultKidCount + g.defaultCodeCount, 0)
 
+            const isInDrag = inDragRange(date)
             return (
               <div
                 key={date}
@@ -136,8 +170,18 @@ export default function CalendarGrid({
                   isToday ? 'today' : '',
                   isSelected ? 'selected' : '',
                   overflow ? 'has-overflow' : '',
+                  isInDrag ? 'in-drag' : '',
                 ].filter(Boolean).join(' ')}
-                onClick={() => onDateSelect(date)}
+                onMouseDown={e => {
+                  // Skip drag when mousing down on an interactive child (group badge, basket, chef hat, etc.)
+                  if ((e.target as HTMLElement).closest('button')) return
+                  setDragStart(date)
+                  setDragCurrent(date)
+                  e.preventDefault() // block accidental text selection while dragging
+                }}
+                onMouseEnter={() => {
+                  if (dragStart !== null) setDragCurrent(date)
+                }}
               >
                 <div className="cal-day-inner">
                   <div className="cal-day-num">{day}</div>

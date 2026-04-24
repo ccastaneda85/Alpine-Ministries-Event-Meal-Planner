@@ -4,6 +4,7 @@ import { api, type ReservationRangeImpact } from '../../services/api'
 
 interface Props {
   defaultArrival: string
+  defaultDeparture?: string
   onClose: () => void
   onSubmit: (data: Omit<GroupReservation, 'groupReservationId'>) => Promise<void>
 }
@@ -15,7 +16,7 @@ function formatDate(iso: string) {
   })
 }
 
-export default function AddGroupModal({ defaultArrival, onClose, onSubmit }: Props) {
+export default function AddGroupModal({ defaultArrival, defaultDeparture, onClose, onSubmit }: Props) {
   const [saving, setSaving] = useState(false)
   const [checking, setChecking] = useState(false)
   const [impact, setImpact] = useState<ReservationRangeImpact | null>(null)
@@ -23,7 +24,7 @@ export default function AddGroupModal({ defaultArrival, onClose, onSubmit }: Pro
   const [form, setForm] = useState({
     groupName: '',
     arrivalDate: defaultArrival,
-    departureDate: defaultArrival,
+    departureDate: defaultDeparture ?? defaultArrival,
     defaultAdultCount: 0,
     defaultYouthCount: 0,
     defaultKidCount: 0,

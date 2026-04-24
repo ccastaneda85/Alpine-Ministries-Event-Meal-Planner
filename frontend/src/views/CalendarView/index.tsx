@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
+import { Users, ShoppingBasket } from 'lucide-react'
 import CalendarGrid from './CalendarGrid'
 import DateDetailPanel from './DateDetailPanel'
 import AddGroupModal from './AddGroupModal'
 import ViewGroupModal from './ViewGroupModal'
+import PurchasingListFormModal from '../PurchasingView/PurchasingListFormModal'
 import { api } from '../../services/api'
 import { useBreadcrumb } from '../../components/layout/BreadcrumbContext'
 import type { GroupReservation, EventDay, MealPeriod, Menu, MealTab } from '../../types'
@@ -14,10 +16,15 @@ function todayIso() {
 }
 
 function monthRange(year: number, month: number) {
-  const start = `${year}-${String(month + 1).padStart(2, '0')}-01`
-  const lastDay = new Date(year, month + 1, 0).getDate()
-  const end = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
-  return { start, end }
+  // Covers the full 42-cell calendar grid (including leading days from prev month
+  // and trailing days from next month), so other-month cells can still show data.
+  const firstDow = new Date(year, month, 1).getDay()
+  const start = new Date(year, month, 1 - firstDow)
+  const end = new Date(start)
+  end.setDate(end.getDate() + 41)
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  return { start: fmt(start), end: fmt(end) }
 }
 
 function eachDateIso(start: string, end: string) {
@@ -87,7 +94,11 @@ export default function CalendarView() {
   const [menus, setMenus] = useState<Menu[]>([])
   const [activeTab, setActiveTab] = useState<MealTab>('groups')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [addGroupDefaults, setAddGroupDefaults] = useState<{ start: string; end: string } | null>(null)
+  const [mealPlanDefaults, setMealPlanDefaults] = useState<{ start: string; end: string } | null>(null)
+  const [rangeChoice, setRangeChoice] = useState<{ start: string; end: string } | null>(null)
   const [viewGroupTarget, setViewGroupTarget] = useState<GroupReservation | null>(null)
+  const navigate = useNavigate()
   const [dayIndicators, setDayIndicators] = useState<Record<string, { hasPrep: boolean; hasPurchase: boolean; purchaseMealPlanId: number | null }>>({})
 
   // Fetch reservations for visible month
@@ -258,6 +269,7 @@ export default function CalendarView() {
             })
           }, 50)
         }}
+        onRangeSelect={(start, end) => setRangeChoice({ start, end })}
       />
       <DateDetailPanel
         selectedDate={selectedDate}
@@ -281,6 +293,32 @@ export default function CalendarView() {
           onSubmit={handleAddGroup}
         />
       )}
+      {addGroupDefaults && (
+        <AddGroupModal
+          defaultArrival={addGroupDefaults.start}
+          defaultDeparture={addGroupDefaults.end}
+          onClose={() => setAddGroupDefaults(null)}
+          onSubmit={handleAddGroup}
+        />
+      )}
+      {mealPlanDefaults && (
+        <PurchasingListFormModal
+          editing={null}
+          defaultStartDate={mealPlanDefaults.start}
+          defaultEndDate={mealPlanDefaults.end}
+          onClose={() => setMealPlanDefaults(null)}
+          onSaved={() => { setMealPlanDefaults(null); navigate('/purchasing') }}
+        />
+      )}
+      {rangeChoice && (
+        <RangeActionModal
+          start={rangeChoice.start}
+          end={rangeChoice.end}
+          onCancel={() => setRangeChoice(null)}
+          onAddGroup={() => { setAddGroupDefaults(rangeChoice); setRangeChoice(null) }}
+          onCreateMealPlan={() => { setMealPlanDefaults(rangeChoice); setRangeChoice(null) }}
+        />
+      )}
       {viewGroupTarget && (
         <ViewGroupModal
           group={viewGroupTarget}
@@ -289,6 +327,52 @@ export default function CalendarView() {
           onDeleteGroup={handleDeleteGroup}
         />
       )}
+    </div>
+  )
+}
+
+function formatRangeDate(iso: string) {
+  const [y, m, d] = iso.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+interface RangeActionProps {
+  start: string
+  end: string
+  onCancel: () => void
+  onAddGroup: () => void
+  onCreateMealPlan: () => void
+}
+
+function RangeActionModal({ start, end, onCancel, onAddGroup, onCreateMealPlan }: RangeActionProps) {
+  const [sy, sm, sd] = start.split('-').map(Number)
+  const [ey, em, ed] = end.split('-').map(Number)
+  const days = Math.floor((Date.UTC(ey, em - 1, ed) - Date.UTC(sy, sm - 1, sd)) / 86_400_000) + 1
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onCancel()}>
+      <div className="modal-box" style={{ maxWidth: 520 }}>
+        <h2 className="modal-title">Selected range</h2>
+        <p className="modal-intro">
+          <strong>{formatRangeDate(start)}</strong> – <strong>{formatRangeDate(end)}</strong>
+          {' '}({days} day{days === 1 ? '' : 's'})
+        </p>
+        <p className="modal-intro">What would you like to create for this range?</p>
+        <div className="range-action-grid">
+          <button type="button" className="range-action-card" onClick={onAddGroup}>
+            <Users size={22} />
+            <span className="range-action-title">Group Reservation</span>
+            <span className="range-action-sub">Create a new group spanning these dates</span>
+          </button>
+          <button type="button" className="range-action-card" onClick={onCreateMealPlan}>
+            <ShoppingBasket size={22} />
+            <span className="range-action-title">Purchase List</span>
+            <span className="range-action-sub">Create a new meal plan / purchasing list for this range</span>
+          </button>
+        </div>
+        <div className="modal-footer">
+          <button type="button" className="btn-outline" onClick={onCancel}>Cancel</button>
+        </div>
+      </div>
     </div>
   )
 }

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import Navbar from './Navbar'
 import { BreadcrumbProvider, useBreadcrumbContext } from './BreadcrumbContext'
@@ -22,6 +23,23 @@ function TitleBar() {
 }
 
 export default function AppShell() {
+  // Escape closes the topmost modal. Every modal in the app uses
+  // `onClick={e => e.target === e.currentTarget && onClose()}` on its
+  // .modal-overlay, so clicking the overlay element itself triggers its close.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return
+      const overlays = document.querySelectorAll<HTMLElement>('.modal-overlay')
+      const last = overlays[overlays.length - 1]
+      if (last) {
+        e.preventDefault()
+        last.click()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   return (
     <BreadcrumbProvider>
       <div className="shell">
