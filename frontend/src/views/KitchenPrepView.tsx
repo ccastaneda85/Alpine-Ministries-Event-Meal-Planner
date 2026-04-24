@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ChefHat, Calendar, Users, UtensilsCrossed } from 'lucide-react'
 import type { EventDay, GroupReservation, MealPeriod } from '../types'
 import { api } from '../services/api'
+import { useBreadcrumb } from '../components/layout/BreadcrumbContext'
 
 const PERIOD_ORDER: ('BREAKFAST' | 'LUNCH' | 'DINNER')[] = ['BREAKFAST', 'LUNCH', 'DINNER']
 const PERIOD_LABEL: Record<string, string> = { BREAKFAST: 'Breakfast', LUNCH: 'Lunch', DINNER: 'Dinner' }
@@ -26,6 +27,7 @@ function statusFor(date: string, today: string): 'upcoming' | 'current' | 'past'
 }
 
 export default function KitchenPrepView() {
+  useBreadcrumb(['Kitchen Prep'])
   const navigate = useNavigate()
   const [eventDays, setEventDays] = useState<EventDay[]>([])
   const [reservations, setReservations] = useState<GroupReservation[]>([])
@@ -113,7 +115,7 @@ export default function KitchenPrepView() {
                   <div className="group-card-name">
                     <Calendar size={15} />
                     {formatDate(day.date)}
-                    <span className={`group-card-status group-card-status--${status}`}>
+                    <span className={`status-badge status-badge--${status === 'current' ? 'gold' : status === 'upcoming' ? 'info' : 'neutral'}`}>
                       {status === 'current' ? 'Today'
                         : status === 'upcoming' ? 'Upcoming'
                         : 'Past'}

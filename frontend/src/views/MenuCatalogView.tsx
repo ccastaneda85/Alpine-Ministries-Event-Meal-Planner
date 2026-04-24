@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Plus, Pencil, Trash2, Check, X, BookOpen, Sandwich, Carrot, UtensilsCrossed } from 'lucide-react'
 import type { MenuWithItems, MenuItemSummary, Ingredient } from '../types'
 import { api } from '../services/api'
+import { useBreadcrumb } from '../components/layout/BreadcrumbContext'
 import EditMenuModal from './MenuCatalogView/EditMenuModal'
 import CreateMenuModal from './MenuCatalogView/CreateMenuModal'
 import NewMenuItemModal from './MenuCatalogView/NewMenuItemModal'
@@ -18,6 +19,7 @@ function extractApiErrorMessage(err: unknown): string {
 
 export default function MenuCatalogView() {
   const [activeTab, setActiveTab] = useState<CatalogTab>('menus')
+  useBreadcrumb(['Menu Catalog', activeTab === 'menus' ? 'Menus' : activeTab === 'items' ? 'Menu Items' : 'Ingredients'])
 
   // ── Menus ──
   const [menus, setMenus] = useState<MenuWithItems[]>([])

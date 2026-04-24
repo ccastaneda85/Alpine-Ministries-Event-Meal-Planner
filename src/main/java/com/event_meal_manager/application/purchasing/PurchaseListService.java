@@ -85,7 +85,18 @@ public class PurchaseListService {
     }
 
     @Transactional
-    public PurchaseListItem updateItem(Long itemId, String itemName, float quantity, String uom, String notes) {
+    public PurchaseListItem updateItem(
+        Long itemId,
+        String itemName,
+        float quantity,
+        String uom,
+        String notes,
+        String vendor,
+        String vendorItemNumber,
+        String vendorItemDescription,
+        com.event_meal_manager.domain.purchasing.PurchaseListItemStatus status,
+        String purchaseOrderNumber
+    ) {
         PurchaseListItem item = purchaseListItemRepository.findById(itemId)
             .orElseThrow(() -> new IllegalArgumentException("PurchaseListItem not found: " + itemId));
 
@@ -93,6 +104,11 @@ public class PurchaseListService {
         item.setQuantity(quantity);
         item.setUom(uom);
         item.setNotes(notes);
+        item.setVendor(vendor);
+        item.setVendorItemNumber(vendorItemNumber);
+        item.setVendorItemDescription(vendorItemDescription);
+        item.setStatus(status);
+        item.setPurchaseOrderNumber(purchaseOrderNumber);
 
         return purchaseListItemRepository.save(item);
     }

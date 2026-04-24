@@ -14,7 +14,19 @@
   --color-text-light: #717766;
   --color-white: #FEFEFE;
   --color-border: #c4cbc3;
-  
+
+  /* Semantic status colors (badges, indicators, pills) */
+  --color-gold-bg: #fdf3d9;
+  --color-gold-text: #9a7429;
+  --color-success: #3d7c4d;
+  --color-success-bg: #dff0e0;
+  --color-success-text: #2f6b3c;
+  --color-info: #4a7a9e;
+  --color-info-bg: #e4eef5;
+  --color-info-text: #35617f;
+  --color-neutral-bg: #ececec;
+  --color-neutral-text: #666;
+
   /* Typography */
   --font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-size-base: 16px;
@@ -377,7 +389,7 @@ html, body, #root {
 /* ===== SIDEBAR ===== */
 .sidebar {
   width: 84px;
-  background: var(--color-primary);
+  background: var(--color-text);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -437,13 +449,24 @@ html, body, #root {
 }
 
 .sidebar-item:hover {
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.08);
   color: white;
 }
 
 .sidebar-item.active {
-  background: rgba(0, 0, 0, 0.2);
-  color: white;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--color-primary-light);
+}
+
+.sidebar-item.active::before {
+  content: '';
+  position: absolute;
+  left: -14px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--color-accent);
 }
 
 .sidebar-tooltip {
@@ -492,13 +515,40 @@ html, body, #root {
   align-items: center;
   padding: 0 var(--spacing-xl);
   flex-shrink: 0;
+  gap: 10px;
 }
 
-.title-bar h1 {
-  font-size: 1.05rem;
+.title-bar-brand {
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--color-text);
   letter-spacing: -0.2px;
+}
+
+.title-bar-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  color: var(--color-text-light);
+  font-weight: 600;
+}
+
+.title-bar-crumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.title-bar-sep {
+  color: var(--color-primary);
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.title-bar-crumb-last {
+  color: var(--color-primary-dark);
+  font-weight: 700;
 }
 
 .view-content {
@@ -863,8 +913,8 @@ html, body, #root {
 .detail-tab:hover { color: var(--color-text); }
 
 .detail-tab.active {
-  color: var(--color-primary);
-  border-bottom-color: var(--color-primary);
+  color: var(--color-text);
+  border-bottom-color: var(--color-accent);
 }
 
 .detail-tab-content {
@@ -2501,6 +2551,40 @@ html, body, #root {
   font-style: italic;
 }
 
+.pdp-vendor-desc {
+  font-size: 0.72rem;
+  color: var(--color-text-light);
+  font-style: italic;
+  margin-top: 2px;
+  line-height: 1.2;
+}
+
+.pdp-vendor-num-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== STATUS BADGE (unified) =====
+   Use for any status pill: item status, reservation status, day status, etc.
+   Variants: --gold, --success, --info, --neutral, --danger */
+.status-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.status-badge--gold    { background: var(--color-gold-bg);    color: var(--color-gold-text); }
+.status-badge--success { background: var(--color-success-bg); color: var(--color-success-text); }
+.status-badge--info    { background: var(--color-info-bg);    color: var(--color-info-text); }
+.status-badge--neutral { background: var(--color-neutral-bg); color: var(--color-neutral-text); }
+.status-badge--danger  { background: #fde7e5;                 color: var(--color-accent); }
+
 .pdp-asterisk {
   color: var(--color-primary);
   font-weight: 700;
@@ -2823,18 +2907,6 @@ html, body, #root {
   text-overflow: ellipsis;
 }
 
-.group-card-status {
-  font-size: 0.68rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 2px 8px;
-  border-radius: 10px;
-}
-
-.group-card-status--current { background: #fdf3d9; color: #9a7429; }
-.group-card-status--upcoming { background: #e4eef5; color: #35617f; }
-.group-card-status--past { background: #ececec; color: #666; }
 
 .group-card-dates {
   display: flex;
@@ -2975,8 +3047,8 @@ html, body, #root {
 }
 
 .catalog-tab.active {
-  color: var(--color-primary);
-  border-bottom-color: var(--color-primary);
+  color: var(--color-text);
+  border-bottom-color: var(--color-accent);
   font-weight: 600;
 }
 

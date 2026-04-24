@@ -5,6 +5,7 @@ import DateDetailPanel from './DateDetailPanel'
 import AddGroupModal from './AddGroupModal'
 import ViewGroupModal from './ViewGroupModal'
 import { api } from '../../services/api'
+import { useBreadcrumb } from '../../components/layout/BreadcrumbContext'
 import type { GroupReservation, EventDay, MealPeriod, Menu, MealTab } from '../../types'
 
 function todayIso() {
@@ -38,6 +39,7 @@ function eachDateIso(start: string, end: string) {
 const STORAGE_KEY_SELECTED_DATE = 'calendar:selectedDate'
 
 export default function CalendarView() {
+  useBreadcrumb(['Calendar'])
   const [searchParams, setSearchParams] = useSearchParams()
   const dateParam = searchParams.get('date')
   const storedDate = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY_SELECTED_DATE) : null

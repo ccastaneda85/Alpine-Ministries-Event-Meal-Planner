@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Users, Calendar, ArrowRight } from 'lucide-react'
 import type { GroupReservation } from '../types'
 import { api } from '../services/api'
+import { useBreadcrumb } from '../components/layout/BreadcrumbContext'
 import ViewGroupModal from './CalendarView/ViewGroupModal'
 
 function todayIso() {
@@ -27,6 +28,7 @@ function statusFor(g: GroupReservation, today: string): 'upcoming' | 'current' |
 }
 
 export default function GroupsView() {
+  useBreadcrumb(['Groups'])
   const [groups, setGroups] = useState<GroupReservation[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<GroupReservation | null>(null)
@@ -98,7 +100,7 @@ export default function GroupsView() {
                 <div className="group-card-main">
                   <div className="group-card-name">
                     {g.groupName}
-                    <span className={`group-card-status group-card-status--${status}`}>
+                    <span className={`status-badge status-badge--${status === 'current' ? 'gold' : status === 'upcoming' ? 'info' : 'neutral'}`}>
                       {status === 'current' ? 'Currently attending'
                         : status === 'upcoming' ? 'Upcoming'
                         : 'Past'}

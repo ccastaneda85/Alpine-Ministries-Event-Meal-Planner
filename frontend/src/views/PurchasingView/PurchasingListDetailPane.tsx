@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Zap, XCircle, Plus, Trash2, Pencil, Check, X, StickyNote } from 'lucide-react'
+import { Zap, XCircle, Plus, Trash2, Pencil, Check, X, StickyNote, Printer } from 'lucide-react'
 import type { MealPlanDetail, PurchaseList, PurchaseListItem } from '../../types'
 import { api } from '../../services/api'
+import alpineLogo from '../../assets/AlpineMainLogo.png'
 import AddCustomItemModal from './AddCustomItemModal'
 import AddFromCatalogModal from './AddFromCatalogModal'
 import ConfirmModal from '../CalendarView/ConfirmModal'
@@ -46,8 +47,17 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
   const [showCatalogModal, setShowCatalogModal] = useState(false)
   const [itemError, setItemError] = useState<string | null>(null)
 
-  // Inline row edit (name / quantity / uom)
-  type EditForm = { name: string; quantity: number; uom: string }
+  // Inline row edit
+  type EditForm = {
+    name: string
+    quantity: number
+    uom: string
+    vendor: string
+    vendorItemNumber: string
+    vendorItemDescription: string
+    status: '' | 'SOURCING' | 'PURCHASED'
+    purchaseOrderNumber: string
+  }
   const [editingItemId, setEditingItemId] = useState<number | null>(null)
   const [editForm, setEditForm] = useState<EditForm | null>(null)
   const [savingEditId, setSavingEditId] = useState<number | null>(null)
@@ -165,7 +175,16 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
 
   function startEditRow(item: PurchaseListItem) {
     setEditingItemId(item.purchaseListItemId)
-    setEditForm({ name: item.purchaseListItemName, quantity: item.quantity, uom: item.uom })
+    setEditForm({
+      name: item.purchaseListItemName,
+      quantity: item.quantity,
+      uom: item.uom,
+      vendor: item.vendor ?? '',
+      vendorItemNumber: item.vendorItemNumber ?? '',
+      vendorItemDescription: item.vendorItemDescription ?? '',
+      status: (item.status ?? '') as '' | 'SOURCING' | 'PURCHASED',
+      purchaseOrderNumber: item.purchaseOrderNumber ?? '',
+    })
     setEditingNotesId(null)
   }
 
@@ -184,6 +203,11 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
         quantity: editForm.quantity,
         uom: editForm.uom,
         notes: item.notes ?? null,
+        vendor: editForm.vendor.trim() || null,
+        vendorItemNumber: editForm.vendorItemNumber.trim() || null,
+        vendorItemDescription: editForm.vendorItemDescription.trim() || null,
+        status: editForm.status === '' ? null : editForm.status,
+        purchaseOrderNumber: editForm.purchaseOrderNumber.trim() || null,
       })
       setItems(prev => prev.map(it => it.purchaseListItemId === item.purchaseListItemId ? updated : it))
       setEditingItemId(null)
@@ -193,6 +217,135 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
     } finally {
       setSavingEditId(null)
     }
+  }
+
+  async function handlePrint() {
+    // Encode logo as base64 so it works in the detached print window
+    let logoDataUri = ''
+    try {
+      const res = await fetch(alpineLogo)
+      const blob = await res.blob()
+      logoDataUri = await new Promise<string>(resolve => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.readAsDataURL(blob)
+      })
+    } catch { /* skip logo if fetch fails */ }
+
+    function esc(s?: string | null) {
+      return (s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    }
+
+    function fmtLong(iso: string) {
+      const [y, m, d] = iso.split('-').map(Number)
+      return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    }
+
+    const rangeStr = `${fmtLong(detail.startDate)} – ${fmtLong(detail.endDate)}`
+    const generatedAt = new Date().toLocaleString('en-US', {
+      month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit',
+    })
+
+    const itemsRows = items.length === 0
+      ? `<tr><td colspan="10" class="empty">No items on this purchase list.</td></tr>`
+      : items.map((item, i) => `
+          <tr>
+            <td class="num">${i + 1}</td>
+            <td>${esc(item.purchaseListItemName)}</td>
+            <td class="num">${item.quantity.toFixed(2)}</td>
+            <td>${esc(item.uom)}</td>
+            <td>${esc(item.vendor)}</td>
+            <td>${esc(item.vendorItemNumber)}</td>
+            <td>${esc(item.vendorItemDescription)}</td>
+            <td>${esc(item.status)}</td>
+            <td>${esc(item.purchaseOrderNumber)}</td>
+            <td class="notes">${esc(item.notes)}</td>
+          </tr>`).join('')
+
+    const logoHtml = logoDataUri
+      ? `<img src="${logoDataUri}" class="logo" alt="Alpine Ministries" />`
+      : ''
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Purchase List — ${esc(detail.name)}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #1a1a1a; padding: 24px 28px; }
+
+    /* Header */
+    .page-header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; border-bottom: 2px solid #BB8E35; padding-bottom: 10px; }
+    .logo { height: 52px; width: auto; }
+    .header-text h1 { font-size: 18px; font-weight: bold; color: #1a1a1a; }
+    .header-text .subtitle { font-size: 12px; color: #9a7429; font-weight: bold; margin-top: 3px; }
+    .header-text .range { font-size: 11px; color: #555; margin-top: 2px; }
+    .header-text .generated { font-size: 10px; color: #888; margin-top: 4px; font-style: italic; }
+
+    /* Items table (framed) */
+    .items-frame { border: 1.5px solid #BB8E35; border-radius: 4px; overflow: hidden; }
+    .items-header { background: #BB8E35; color: #fff; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.08em; padding: 5px 10px; }
+    .items-body { padding: 0; }
+
+    .items-table { width: 100%; border-collapse: collapse; }
+    .items-table th { text-align: left; font-size: 10px; font-weight: bold; border-bottom: 2px solid #1a1a1a; padding: 5px 7px; background: #faf7ee; }
+    .items-table th.num { text-align: right; }
+    .items-table td { padding: 4px 7px; border-bottom: 1px solid #e2e2e2; font-size: 11px; vertical-align: top; }
+    .items-table td.num { text-align: right; }
+    .items-table td.notes { font-style: italic; color: #555; font-size: 10px; }
+    .items-table tr:last-child td { border-bottom: none; }
+    .items-table td.empty { text-align: center; color: #999; font-style: italic; padding: 14px 0; }
+
+    @media print {
+      body { padding: 14px 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-header">
+    ${logoHtml}
+    <div class="header-text">
+      <h1>Purchase List</h1>
+      <div class="subtitle">${esc(detail.name)}</div>
+      <div class="range">${rangeStr}</div>
+      <div class="generated">Printed ${generatedAt}</div>
+    </div>
+  </div>
+
+  <div class="items-frame">
+    <div class="items-header">Items (${items.length})</div>
+    <div class="items-body">
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th class="num">#</th>
+            <th>Item</th>
+            <th class="num">Quantity</th>
+            <th>Unit</th>
+            <th>Vendor</th>
+            <th>Vendor Item #</th>
+            <th>Vendor Description</th>
+            <th>Status</th>
+            <th>PO #</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsRows}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>`
+
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(html)
+    win.document.close()
+    win.focus()
+    setTimeout(() => win.print(), 400)
   }
 
   function openNotesEditor(item: PurchaseListItem) {
@@ -211,6 +364,11 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
         quantity: item.quantity,
         uom: item.uom,
         notes: editingNotesValue,
+        vendor: item.vendor ?? null,
+        vendorItemNumber: item.vendorItemNumber ?? null,
+        vendorItemDescription: item.vendorItemDescription ?? null,
+        status: item.status ?? null,
+        purchaseOrderNumber: item.purchaseOrderNumber ?? null,
       })
       setItems(prev => prev.map(it => it.purchaseListItemId === item.purchaseListItemId ? updated : it))
       setEditingNotesId(null)
@@ -277,6 +435,14 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
           onClick={() => setShowAddModal(true)}
         >
           <Plus size={13} /> Custom Item
+        </button>
+        <button
+          type="button"
+          className="btn-outline btn-sm pdp-action-btn"
+          onClick={handlePrint}
+          title="Print purchase list"
+        >
+          <Printer size={13} /> Print
         </button>
         <button
           type="button"
@@ -460,6 +626,10 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
                   <th>Item</th>
                   <th className="num">Quantity</th>
                   <th>Unit</th>
+                  <th>Vendor</th>
+                  <th>Vendor Item #</th>
+                  <th>Status</th>
+                  <th>PO #</th>
                   <th>Notes</th>
                   <th className="col-actions">Actions</th>
                 </tr>
@@ -535,6 +705,78 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
                         item.uom
                       )}
                     </td>
+                    <td>
+                      {isEditing && editForm ? (
+                        <input
+                          className="kp-inline-input"
+                          style={{ width: 110, textAlign: 'left' }}
+                          value={editForm.vendor}
+                          onChange={e => setEditForm(f => f ? { ...f, vendor: e.target.value } : f)}
+                        />
+                      ) : (
+                        item.vendor ?? <span className="pdp-muted">—</span>
+                      )}
+                    </td>
+                    <td>
+                      {isEditing && editForm ? (
+                        <div className="pdp-vendor-num-cell">
+                          <input
+                            className="kp-inline-input"
+                            style={{ width: 110, textAlign: 'left' }}
+                            placeholder="Item #"
+                            value={editForm.vendorItemNumber}
+                            onChange={e => setEditForm(f => f ? { ...f, vendorItemNumber: e.target.value } : f)}
+                          />
+                          <input
+                            className="kp-inline-input"
+                            style={{ width: 180, textAlign: 'left', marginTop: 4 }}
+                            placeholder="Vendor description"
+                            value={editForm.vendorItemDescription}
+                            onChange={e => setEditForm(f => f ? { ...f, vendorItemDescription: e.target.value } : f)}
+                          />
+                        </div>
+                      ) : item.vendorItemNumber ? (
+                        <span title={item.vendorItemDescription ?? undefined}>
+                          {item.vendorItemNumber}
+                          {item.vendorItemDescription && (
+                            <div className="pdp-vendor-desc">{item.vendorItemDescription}</div>
+                          )}
+                        </span>
+                      ) : (
+                        <span className="pdp-muted">—</span>
+                      )}
+                    </td>
+                    <td>
+                      {isEditing && editForm ? (
+                        <select
+                          className="kp-inline-input"
+                          value={editForm.status}
+                          onChange={e => setEditForm(f => f ? { ...f, status: e.target.value as EditForm['status'] } : f)}
+                        >
+                          <option value="">—</option>
+                          <option value="SOURCING">Sourcing</option>
+                          <option value="PURCHASED">Purchased</option>
+                        </select>
+                      ) : item.status ? (
+                        <span className={`status-badge status-badge--${item.status === 'SOURCING' ? 'gold' : 'success'}`}>
+                          {item.status === 'SOURCING' ? 'Sourcing' : 'Purchased'}
+                        </span>
+                      ) : (
+                        <span className="pdp-muted">—</span>
+                      )}
+                    </td>
+                    <td>
+                      {isEditing && editForm ? (
+                        <input
+                          className="kp-inline-input"
+                          style={{ width: 100, textAlign: 'left' }}
+                          value={editForm.purchaseOrderNumber}
+                          onChange={e => setEditForm(f => f ? { ...f, purchaseOrderNumber: e.target.value } : f)}
+                        />
+                      ) : (
+                        item.purchaseOrderNumber ?? <span className="pdp-muted">—</span>
+                      )}
+                    </td>
                     <td>{item.notes ?? ''}</td>
                     <td className="col-actions">
                       <div className="action-btns">
@@ -591,7 +833,7 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
                   </tr>
                   {isEditingNotes && (
                     <tr className="kp-notes-editor-row">
-                      <td colSpan={6}>
+                      <td colSpan={10}>
                         <div className="kp-notes-editor">
                           <textarea
                             className="kp-notes-textarea"

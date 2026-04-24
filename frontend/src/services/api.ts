@@ -108,12 +108,30 @@ export const api = {
     fetchJson<PurchaseListItem>(`${BASE}/purchase-list-items/${itemId}/toggle-checked`, { method: 'PATCH' }),
   updatePurchaseListItem: (
     itemId: number,
-    body: { itemName: string; quantity: number; uom: string; notes?: string | null },
+    body: {
+      itemName: string
+      quantity: number
+      uom: string
+      notes?: string | null
+      vendor?: string | null
+      vendorItemNumber?: string | null
+      vendorItemDescription?: string | null
+      status?: 'SOURCING' | 'PURCHASED' | null
+      purchaseOrderNumber?: string | null
+    },
   ) =>
     fetchJson<PurchaseListItem>(`${BASE}/purchase-list-items/${itemId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...body, notes: body.notes ?? null }),
+      body: JSON.stringify({
+        ...body,
+        notes: body.notes ?? null,
+        vendor: body.vendor ?? null,
+        vendorItemNumber: body.vendorItemNumber ?? null,
+        vendorItemDescription: body.vendorItemDescription ?? null,
+        status: body.status ?? null,
+        purchaseOrderNumber: body.purchaseOrderNumber ?? null,
+      }),
     }),
   deletePurchaseListItem: (itemId: number) =>
     fetchVoid(`${BASE}/purchase-list-items/${itemId}`, { method: 'DELETE' }),

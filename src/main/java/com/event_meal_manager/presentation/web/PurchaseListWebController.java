@@ -68,7 +68,7 @@ public class PurchaseListWebController {
                           @RequestParam String uom,
                           @RequestParam(required = false) String notes,
                           RedirectAttributes redirectAttributes) {
-        purchaseListService.addItem(id, itemName, quantity, uom, notes);
+        purchaseListService.addItem(id, itemName, quantity, uom, notes, null);
         redirectAttributes.addFlashAttribute("successMessage", "Item added!");
         return "redirect:/purchase-lists/" + id;
     }

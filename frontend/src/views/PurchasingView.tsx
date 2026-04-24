@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Plus, Eye, Pencil, Trash2, Calendar, X } from 'lucide-react'
 import type { MealPlan, MealPlanDetail, GroupReservation } from '../types'
 import { api } from '../services/api'
+import { useBreadcrumb } from '../components/layout/BreadcrumbContext'
 import PurchasingListFormModal from './PurchasingView/PurchasingListFormModal'
 import PurchasingListDetailPane from './PurchasingView/PurchasingListDetailPane'
 import ViewGroupModal from './CalendarView/ViewGroupModal'
@@ -27,6 +28,16 @@ function daysBetween(start: string, end: string): number {
   return Math.floor((b - a) / 86_400_000) + 1
 }
 
+const STORAGE_KEY_SELECTED_PLAN = 'purchasing:selectedMealPlanId'
+
+function readStoredSelectedId(): number | null {
+  if (typeof window === 'undefined') return null
+  const raw = localStorage.getItem(STORAGE_KEY_SELECTED_PLAN)
+  if (!raw) return null
+  const n = Number(raw)
+  return Number.isFinite(n) && n > 0 ? n : null
+}
+
 export default function PurchasingView() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -37,10 +48,12 @@ export default function PurchasingView() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [selectedId, setSelectedId] = useState<number | null>(() => readStoredSelectedId())
   const [detail, setDetail] = useState<MealPlanDetail | null>(null)
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [viewingGroup, setViewingGroup] = useState<GroupReservation | null>(null)
+
+  useBreadcrumb(['Purchasing', selectedId !== null ? detail?.name : null])
 
   // Deep-link: honor ?mealPlanId= on first load, then strip it so it doesn't override user clicks.
   useEffect(() => {
@@ -54,6 +67,15 @@ export default function PurchasingView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Persist the selected plan so returning to this view restores it.
+  useEffect(() => {
+    if (selectedId === null) {
+      localStorage.removeItem(STORAGE_KEY_SELECTED_PLAN)
+    } else {
+      localStorage.setItem(STORAGE_KEY_SELECTED_PLAN, String(selectedId))
+    }
+  }, [selectedId])
+
   useEffect(() => {
     if (selectedId === null) {
       setDetail(null)
@@ -63,7 +85,12 @@ export default function PurchasingView() {
     setLoadingDetail(true)
     api.getMealPlanDetail(selectedId)
       .then(d => { if (!cancelled) setDetail(d) })
-      .catch(err => { if (!cancelled) setErrorMessage(extractApiErrorMessage(err)) })
+      .catch(err => {
+        if (cancelled) return
+        // Stored id points at a plan that no longer exists — clear it so we don't keep erroring on future visits.
+        setErrorMessage(extractApiErrorMessage(err))
+        setSelectedId(null)
+      })
       .finally(() => { if (!cancelled) setLoadingDetail(false) })
     return () => { cancelled = true }
   }, [selectedId])
