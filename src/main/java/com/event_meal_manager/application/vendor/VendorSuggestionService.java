@@ -120,6 +120,10 @@ public class VendorSuggestionService {
         intro.put("text",
             "I have a kitchen purchase list and CSV catalogs from vendors. " +
             "For each purchase list item, pick the best-matching vendor + SKU from the catalogs. " +
+            "Each item also includes the kitchen's needed quantity in a recipe unit (e.g. 12 lb). " +
+            "Use the vendor's pack size / unit of measure to compute how many vendor units to actually order " +
+            "(e.g. needed 12 lb of bacon, vendor sells in 6 lb cases → purchaseQuantity=2, purchaseUom=\"case\"). " +
+            "Round up to the next whole vendor unit unless the vendor sells the same unit as the recipe. " +
             "If no reasonable match exists for an item, omit it from the suggestions array."
         );
         contentBlocks.add(intro);
@@ -186,6 +190,8 @@ public class VendorSuggestionService {
         itemProps.set("vendor", strType("Vendor name exactly as given in the CSV headers (e.g. Sysco)."));
         itemProps.set("vendorItemNumber", strType("The vendor's SKU / item number from the CSV."));
         itemProps.set("vendorItemDescription", strType("The vendor's own description of the item."));
+        itemProps.set("purchaseQuantity", numType("How many vendor units to order to satisfy the needed kitchen qty (round up)."));
+        itemProps.set("purchaseUom", strType("The vendor's UOM / pack — e.g. \"case\", \"each\", \"6lb case\"."));
         itemProps.set("confidence", enumType("Confidence this is the right match.", "high", "medium", "low"));
         itemProps.set("rationale", strType("Brief reason for the pick."));
         itemSchema.set("properties", itemProps);
@@ -226,6 +232,13 @@ public class VendorSuggestionService {
         return n;
     }
 
+    private ObjectNode numType(String desc) {
+        ObjectNode n = mapper.createObjectNode();
+        n.put("type", "number");
+        n.put("description", desc);
+        return n;
+    }
+
     private ObjectNode enumType(String desc, String... values) {
         ObjectNode n = mapper.createObjectNode();
         n.put("type", "string");
@@ -240,7 +253,9 @@ public class VendorSuggestionService {
         Long purchaseListItemId,
         String vendor,
         String vendorItemNumber,
-        String vendorItemDescription
+        String vendorItemDescription,
+        Float purchaseQuantity,
+        String purchaseUom
     ) {}
 
     private List<Suggestion> parseSuggestions(String body) throws IOException {
@@ -261,7 +276,9 @@ public class VendorSuggestionService {
                         id,
                         textOrNull(s, "vendor"),
                         textOrNull(s, "vendorItemNumber"),
-                        textOrNull(s, "vendorItemDescription")
+                        textOrNull(s, "vendorItemDescription"),
+                        floatOrNull(s, "purchaseQuantity"),
+                        textOrNull(s, "purchaseUom")
                     ));
                 }
                 return out;
@@ -288,7 +305,9 @@ public class VendorSuggestionService {
                 s.vendorItemNumber(),
                 s.vendorItemDescription(),
                 target.getStatus(),
-                target.getPurchaseOrderNumber()
+                target.getPurchaseOrderNumber(),
+                s.purchaseQuantity(),
+                s.purchaseUom()
             );
             updated++;
         }
@@ -300,6 +319,12 @@ public class VendorSuggestionService {
         if (v.isMissingNode() || v.isNull()) return null;
         String s = v.asText();
         return s.isBlank() ? null : s;
+    }
+
+    private static Float floatOrNull(JsonNode n, String field) {
+        JsonNode v = n.path(field);
+        if (v.isMissingNode() || v.isNull() || !v.isNumber()) return null;
+        return (float) v.asDouble();
     }
 
     private static String quote(String s) {

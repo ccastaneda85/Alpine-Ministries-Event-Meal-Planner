@@ -55,4 +55,10 @@ public class PurchaseListItem {
     private PurchaseListItemStatus status;
 
     private String purchaseOrderNumber;
+
+    // What to actually order from the vendor — typically a vendor pack size
+    // (e.g. needed=12 lb, purchaseQuantity=1, purchaseUom="case (12lb)").
+    private Float purchaseQuantity;
+
+    private String purchaseUom;
 }

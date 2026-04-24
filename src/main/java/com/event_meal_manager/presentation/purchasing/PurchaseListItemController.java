@@ -53,7 +53,9 @@ public class PurchaseListItemController {
             request.vendorItemNumber(),
             request.vendorItemDescription(),
             request.status(),
-            request.purchaseOrderNumber()
+            request.purchaseOrderNumber(),
+            request.purchaseQuantity(),
+            request.purchaseUom()
         );
         return ResponseEntity.ok(toDTO(item));
     }
@@ -84,7 +86,9 @@ public class PurchaseListItemController {
             i.getVendorItemNumber(),
             i.getVendorItemDescription(),
             i.getStatus(),
-            i.getPurchaseOrderNumber()
+            i.getPurchaseOrderNumber(),
+            i.getPurchaseQuantity(),
+            i.getPurchaseUom()
         );
     }
 
@@ -101,7 +105,9 @@ public class PurchaseListItemController {
         String vendorItemNumber,
         String vendorItemDescription,
         PurchaseListItemStatus status,
-        String purchaseOrderNumber
+        String purchaseOrderNumber,
+        Float purchaseQuantity,
+        String purchaseUom
     ) {}
 
     public record AddItemRequest(String itemName, float quantity, String uom, String notes, Long ingredientId) {}
@@ -114,6 +120,8 @@ public class PurchaseListItemController {
         String vendorItemNumber,
         String vendorItemDescription,
         PurchaseListItemStatus status,
-        String purchaseOrderNumber
+        String purchaseOrderNumber,
+        Float purchaseQuantity,
+        String purchaseUom
     ) {}
 }

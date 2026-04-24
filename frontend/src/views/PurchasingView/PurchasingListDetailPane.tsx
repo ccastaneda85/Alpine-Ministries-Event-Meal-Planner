@@ -57,6 +57,8 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
     vendorItemDescription: string
     status: '' | 'SOURCING' | 'PURCHASED'
     purchaseOrderNumber: string
+    purchaseQuantity: string  // string so users can clear the field; parsed at save
+    purchaseUom: string
   }
   const [editingItemId, setEditingItemId] = useState<number | null>(null)
   const [editForm, setEditForm] = useState<EditForm | null>(null)
@@ -188,6 +190,8 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
       vendorItemDescription: item.vendorItemDescription ?? '',
       status: (item.status ?? '') as '' | 'SOURCING' | 'PURCHASED',
       purchaseOrderNumber: item.purchaseOrderNumber ?? '',
+      purchaseQuantity: item.purchaseQuantity != null ? String(item.purchaseQuantity) : '',
+      purchaseUom: item.purchaseUom ?? '',
     })
     setEditingNotesId(null)
   }
@@ -201,6 +205,7 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
     if (!editForm) return
     setSavingEditId(item.purchaseListItemId)
     setItemError(null)
+    const purchaseQty = editForm.purchaseQuantity.trim() === '' ? null : Number(editForm.purchaseQuantity)
     try {
       const updated = await api.updatePurchaseListItem(item.purchaseListItemId, {
         itemName: editForm.name,
@@ -212,6 +217,8 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
         vendorItemDescription: editForm.vendorItemDescription.trim() || null,
         status: editForm.status === '' ? null : editForm.status,
         purchaseOrderNumber: editForm.purchaseOrderNumber.trim() || null,
+        purchaseQuantity: purchaseQty != null && Number.isFinite(purchaseQty) ? purchaseQty : null,
+        purchaseUom: editForm.purchaseUom.trim() || null,
       })
       setItems(prev => prev.map(it => it.purchaseListItemId === item.purchaseListItemId ? updated : it))
       setEditingItemId(null)
@@ -267,13 +274,15 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
     })
 
     const itemsRows = items.length === 0
-      ? `<tr><td colspan="10" class="empty">No items on this purchase list.</td></tr>`
+      ? `<tr><td colspan="12" class="empty">No items on this purchase list.</td></tr>`
       : items.map((item, i) => `
           <tr>
             <td class="num">${i + 1}</td>
             <td>${esc(item.purchaseListItemName)}</td>
             <td class="num">${item.quantity.toFixed(2)}</td>
             <td>${esc(item.uom)}</td>
+            <td class="num">${item.purchaseQuantity != null ? item.purchaseQuantity.toFixed(2) : ''}</td>
+            <td>${esc(item.purchaseUom)}</td>
             <td>${esc(item.vendor)}</td>
             <td>${esc(item.vendorItemNumber)}</td>
             <td>${esc(item.vendorItemDescription)}</td>
@@ -343,6 +352,8 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
             <th>Item</th>
             <th class="num">Quantity</th>
             <th>Unit</th>
+            <th class="num">Purchase Qty</th>
+            <th>Purchase UOM</th>
             <th>Vendor</th>
             <th>Vendor Item #</th>
             <th>Vendor Description</th>
@@ -389,6 +400,8 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
         vendorItemDescription: item.vendorItemDescription ?? null,
         status: item.status ?? null,
         purchaseOrderNumber: item.purchaseOrderNumber ?? null,
+        purchaseQuantity: item.purchaseQuantity ?? null,
+        purchaseUom: item.purchaseUom ?? null,
       })
       setItems(prev => prev.map(it => it.purchaseListItemId === item.purchaseListItemId ? updated : it))
       setEditingNotesId(null)
@@ -671,6 +684,8 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
                   <th>Item</th>
                   <th className="num">Quantity</th>
                   <th>Unit</th>
+                  <th className="num">Purchase Qty</th>
+                  <th>Purchase UOM</th>
                   <th>Vendor</th>
                   <th>Vendor Item #</th>
                   <th>Status</th>
@@ -748,6 +763,36 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
                         />
                       ) : (
                         item.uom
+                      )}
+                    </td>
+                    <td className="num">
+                      {isEditing && editForm ? (
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          className="kp-inline-input"
+                          placeholder="—"
+                          value={editForm.purchaseQuantity}
+                          onChange={e => setEditForm(f => f ? { ...f, purchaseQuantity: e.target.value } : f)}
+                        />
+                      ) : item.purchaseQuantity != null ? (
+                        item.purchaseQuantity.toFixed(2)
+                      ) : (
+                        <span className="pdp-muted">—</span>
+                      )}
+                    </td>
+                    <td>
+                      {isEditing && editForm ? (
+                        <input
+                          className="kp-inline-input"
+                          style={{ width: 110, textAlign: 'left' }}
+                          placeholder="e.g., case"
+                          value={editForm.purchaseUom}
+                          onChange={e => setEditForm(f => f ? { ...f, purchaseUom: e.target.value } : f)}
+                        />
+                      ) : (
+                        item.purchaseUom ?? <span className="pdp-muted">—</span>
                       )}
                     </td>
                     <td>
@@ -878,7 +923,7 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
                   </tr>
                   {isEditingNotes && (
                     <tr className="kp-notes-editor-row">
-                      <td colSpan={10}>
+                      <td colSpan={12}>
                         <div className="kp-notes-editor">
                           <textarea
                             className="kp-notes-textarea"

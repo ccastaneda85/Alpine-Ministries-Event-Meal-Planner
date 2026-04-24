@@ -95,7 +95,9 @@ public class PurchaseListService {
         String vendorItemNumber,
         String vendorItemDescription,
         com.event_meal_manager.domain.purchasing.PurchaseListItemStatus status,
-        String purchaseOrderNumber
+        String purchaseOrderNumber,
+        Float purchaseQuantity,
+        String purchaseUom
     ) {
         PurchaseListItem item = purchaseListItemRepository.findById(itemId)
             .orElseThrow(() -> new IllegalArgumentException("PurchaseListItem not found: " + itemId));
@@ -109,6 +111,8 @@ public class PurchaseListService {
         item.setVendorItemDescription(vendorItemDescription);
         item.setStatus(status);
         item.setPurchaseOrderNumber(purchaseOrderNumber);
+        item.setPurchaseQuantity(purchaseQuantity);
+        item.setPurchaseUom(purchaseUom);
 
         return purchaseListItemRepository.save(item);
     }

@@ -124,6 +124,8 @@ export const api = {
       vendorItemDescription?: string | null
       status?: 'SOURCING' | 'PURCHASED' | null
       purchaseOrderNumber?: string | null
+      purchaseQuantity?: number | null
+      purchaseUom?: string | null
     },
   ) =>
     fetchJson<PurchaseListItem>(`${BASE}/purchase-list-items/${itemId}`, {
@@ -137,6 +139,8 @@ export const api = {
         vendorItemDescription: body.vendorItemDescription ?? null,
         status: body.status ?? null,
         purchaseOrderNumber: body.purchaseOrderNumber ?? null,
+        purchaseQuantity: body.purchaseQuantity ?? null,
+        purchaseUom: body.purchaseUom ?? null,
       }),
     }),
   deletePurchaseListItem: (itemId: number) =>

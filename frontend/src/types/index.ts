@@ -161,6 +161,8 @@ export interface PurchaseListItem {
   vendorItemDescription?: string | null
   status?: PurchaseListItemStatus | null
   purchaseOrderNumber?: string | null
+  purchaseQuantity?: number | null
+  purchaseUom?: string | null
 }
 
 export interface MealPlanDetail {
