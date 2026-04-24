@@ -16,6 +16,4 @@ public interface EventDayRepository extends JpaRepository<EventDay, Long> {
     Optional<EventDay> findFirstByDate(LocalDate date);
 
     List<EventDay> findByDateBetween(LocalDate start, LocalDate end);
-
-    List<EventDay> findByMealPlanMealPlanId(Long mealPlanId);
 }

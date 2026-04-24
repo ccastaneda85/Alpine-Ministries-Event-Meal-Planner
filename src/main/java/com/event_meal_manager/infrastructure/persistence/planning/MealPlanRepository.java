@@ -13,4 +13,6 @@ public interface MealPlanRepository extends JpaRepository<MealPlan, Long> {
     List<MealPlan> findByStartDateBetween(LocalDate start, LocalDate end);
 
     List<MealPlan> findByNameContainingIgnoreCase(String name);
+
+    boolean existsByStartDateLessThanEqualAndEndDateGreaterThanEqual(LocalDate date, LocalDate sameDate);
 }

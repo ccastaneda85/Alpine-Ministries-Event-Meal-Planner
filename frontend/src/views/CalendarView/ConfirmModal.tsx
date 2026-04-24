@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react'
+
 interface Props {
   title: string
-  message: string
+  message: ReactNode
   confirmLabel?: string
   disabled?: boolean
   onConfirm: () => void
@@ -12,7 +14,7 @@ export default function ConfirmModal({ title, message, confirmLabel = 'Delete', 
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && !disabled && onCancel()}>
       <div className="modal-box confirm-modal-box">
         <h2 className="modal-title">{title}</h2>
-        <p className="confirm-modal-message">{message}</p>
+        <div className="confirm-modal-message">{message}</div>
         <div className="modal-footer">
           <button type="button" className="btn-outline" disabled={disabled} onClick={onCancel}>Cancel</button>
           <button type="button" className="btn-danger" disabled={disabled} onClick={onConfirm}>{confirmLabel}</button>

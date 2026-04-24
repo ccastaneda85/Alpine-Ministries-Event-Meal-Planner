@@ -73,6 +73,19 @@ public class GroupReservationController {
         return ResponseEntity.ok(reservation);
     }
 
+    @GetMapping("/{id}/deletion-impact")
+    public ResponseEntity<GroupReservationService.ReservationImpact> getDeletionImpact(@PathVariable Long id) {
+        return ResponseEntity.ok(groupReservationService.getDeletionImpact(id));
+    }
+
+    @GetMapping("/{id}/shrink-impact")
+    public ResponseEntity<GroupReservationService.ReservationImpact> getShrinkImpact(
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate newStart,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate newEnd) {
+        return ResponseEntity.ok(groupReservationService.getShrinkImpact(id, newStart, newEnd));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         groupReservationService.delete(id);

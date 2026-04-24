@@ -87,7 +87,7 @@ public class GroupReservationWebController {
                          @RequestParam(required = false) String notes,
                          RedirectAttributes redirectAttributes) {
         groupReservationService.update(id, groupName, defaultAdultCount, defaultYouthCount,
-            defaultKidCount, defaultCodeCount, defaultCustomDietCount, arrivalDate, departureDate, customDietNotes, notes);
+            defaultKidCount, defaultCodeCount, defaultCustomDietCount, arrivalDate, departureDate, customDietNotes, notes, false);
         redirectAttributes.addFlashAttribute("successMessage", "Reservation updated successfully!");
         return "redirect:/group-reservations/" + id;
     }

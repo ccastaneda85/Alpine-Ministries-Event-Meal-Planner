@@ -1,17 +1,26 @@
-import { ChevronLeft, ChevronRight, Calendar, User } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar, User, ChefHat, ShoppingBasket } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import type { GroupReservation } from '../../types'
+
+interface DayIndicator {
+  hasPrep: boolean
+  hasPurchase: boolean
+  purchaseMealPlanId: number | null
+}
 
 interface Props {
   year: number
   month: number
   selectedDate: string
   reservations: GroupReservation[]
+  dayIndicators?: Record<string, DayIndicator>
   onDateSelect: (date: string) => void
   onPrevMonth: () => void
   onNextMonth: () => void
   onToday: () => void
   onAddGroup: () => void
   onViewGroup: (group: GroupReservation) => void
+  onOpenKitchenPrep: (date: string) => void
 }
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -53,9 +62,10 @@ function GroupBadge({ g, date, onViewGroup, onDateSelect }: {
 }
 
 export default function CalendarGrid({
-  year, month, selectedDate, reservations,
-  onDateSelect, onPrevMonth, onNextMonth, onToday, onAddGroup, onViewGroup,
+  year, month, selectedDate, reservations, dayIndicators,
+  onDateSelect, onPrevMonth, onNextMonth, onToday, onAddGroup, onViewGroup, onOpenKitchenPrep,
 }: Props) {
+  const navigate = useNavigate()
   const d = new Date()
   const todayIso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   const firstDow = new Date(year, month, 1).getDay()
@@ -110,10 +120,12 @@ export default function CalendarGrid({
         </div>
         <div className="cal-days">
           {cells.map(({ date, day, current }) => {
-            const groups = current ? groupsOnDate(reservations, date) : []
+            const groups = groupsOnDate(reservations, date)
             const isToday = date === todayIso
             const isSelected = date === selectedDate
             const overflow = groups.length > 3
+            const grandTotal = groups.reduce((sum, g) =>
+              sum + g.defaultAdultCount + g.defaultYouthCount + g.defaultKidCount + g.defaultCodeCount, 0)
 
             return (
               <div
@@ -125,7 +137,7 @@ export default function CalendarGrid({
                   isSelected ? 'selected' : '',
                   overflow ? 'has-overflow' : '',
                 ].filter(Boolean).join(' ')}
-                onClick={() => current && onDateSelect(date)}
+                onClick={() => onDateSelect(date)}
               >
                 <div className="cal-day-inner">
                   <div className="cal-day-num">{day}</div>
@@ -135,6 +147,42 @@ export default function CalendarGrid({
                         <GroupBadge key={g.groupReservationId} g={g} date={date} onViewGroup={onViewGroup} onDateSelect={onDateSelect} />
                       ))}
                       {overflow && <div className="cal-group-more">+{groups.length - 3} more</div>}
+                    </div>
+                  )}
+                  {(grandTotal > 0 || dayIndicators?.[date]?.hasPrep || dayIndicators?.[date]?.hasPurchase) && (
+                    <div className="cal-day-total">
+                      {dayIndicators?.[date]?.hasPrep && (
+                        <button
+                          type="button"
+                          className="cal-day-indicator cal-indicator-prep cal-indicator-btn"
+                          title="Open kitchen prep list"
+                          onClick={e => {
+                            e.stopPropagation()
+                            onOpenKitchenPrep(date)
+                          }}
+                        >
+                          <ChefHat size={10} />
+                        </button>
+                      )}
+                      {dayIndicators?.[date]?.hasPurchase && (
+                        <button
+                          type="button"
+                          className="cal-day-indicator cal-indicator-purchase cal-indicator-btn"
+                          title="Open purchase list"
+                          onClick={e => {
+                            e.stopPropagation()
+                            const mpId = dayIndicators?.[date]?.purchaseMealPlanId
+                            navigate(mpId != null ? `/purchasing?mealPlanId=${mpId}` : '/purchasing')
+                          }}
+                        >
+                          <ShoppingBasket size={10} />
+                        </button>
+                      )}
+                      {grandTotal > 0 && (
+                        <span className="cal-day-headcount-total">
+                          <User size={9} />{grandTotal}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>

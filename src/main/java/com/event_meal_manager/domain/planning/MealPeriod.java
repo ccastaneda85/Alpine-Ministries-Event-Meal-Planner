@@ -27,7 +27,7 @@ public class MealPeriod {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long mealPeriodId;
 
-    @JsonIgnoreProperties({"mealPeriods", "kitchenPrepList", "mealPlan", "notes"})
+    @JsonIgnoreProperties({"mealPeriods", "kitchenPrepList", "notes"})
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_day_id", nullable = false)
     private EventDay eventDay;

@@ -17,8 +17,10 @@ public class MenuItemRecipeController {
     private final MenuItemRecipeService menuItemRecipeService;
 
     @GetMapping("/menu-item/{menuItemId}")
-    public List<MenuItemRecipe> findByMenuItemId(@PathVariable Long menuItemId) {
-        return menuItemRecipeService.findByMenuItemId(menuItemId);
+    public List<MenuItemRecipeDTO> findByMenuItemId(@PathVariable Long menuItemId) {
+        return menuItemRecipeService.findByMenuItemId(menuItemId).stream()
+            .map(this::toDTO)
+            .toList();
     }
 
     @GetMapping("/ingredient/{ingredientId}")
@@ -34,7 +36,7 @@ public class MenuItemRecipeController {
     }
 
     @PostMapping
-    public ResponseEntity<MenuItemRecipe> create(@RequestBody CreateMenuItemRecipeRequest request) {
+    public ResponseEntity<MenuItemRecipeDTO> create(@RequestBody CreateMenuItemRecipeRequest request) {
         MenuItemRecipe recipe = menuItemRecipeService.create(
             request.menuItemId(),
             request.ingredientId(),
@@ -44,11 +46,25 @@ public class MenuItemRecipeController {
             request.codePortion(),
             request.notes()
         );
-        return ResponseEntity.status(HttpStatus.CREATED).body(recipe);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toDTO(recipe));
+    }
+
+    private MenuItemRecipeDTO toDTO(MenuItemRecipe r) {
+        return new MenuItemRecipeDTO(
+            r.getMenuItemRecipeId(),
+            r.getIngredient().getIngredientId(),
+            r.getIngredient().getIngredientName(),
+            r.getIngredient().getUnitOfMeasure(),
+            r.getAdultPortion(),
+            r.getYouthPortion(),
+            r.getKidPortion(),
+            r.getCodePortion(),
+            r.getNotes()
+        );
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MenuItemRecipe> update(@PathVariable Long id, @RequestBody UpdateMenuItemRecipeRequest request) {
+    public ResponseEntity<MenuItemRecipeDTO> update(@PathVariable Long id, @RequestBody UpdateMenuItemRecipeRequest request) {
         MenuItemRecipe recipe = menuItemRecipeService.update(
             id,
             request.adultPortion(),
@@ -57,7 +73,7 @@ public class MenuItemRecipeController {
             request.codePortion(),
             request.notes()
         );
-        return ResponseEntity.ok(recipe);
+        return ResponseEntity.ok(toDTO(recipe));
     }
 
     @DeleteMapping("/{id}")
@@ -65,6 +81,18 @@ public class MenuItemRecipeController {
         menuItemRecipeService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    public record MenuItemRecipeDTO(
+        Long menuItemRecipeId,
+        Long ingredientId,
+        String ingredientName,
+        String unitOfMeasure,
+        float adultPortion,
+        float youthPortion,
+        float kidPortion,
+        float codePortion,
+        String notes
+    ) {}
 
     public record CreateMenuItemRecipeRequest(
         Long menuItemId,

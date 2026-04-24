@@ -39,8 +39,8 @@ public class KitchenPrepWebController {
 
     @PostMapping("/{id}/notes")
     public String updateNotes(@PathVariable Long id, @RequestParam String notes, RedirectAttributes redirectAttributes) {
-        kitchenPrepService.updateNotes(id, notes);
-        redirectAttributes.addFlashAttribute("successMessage", "Notes updated!");
+        kitchenPrepService.updateStaffInstructions(id, notes);
+        redirectAttributes.addFlashAttribute("successMessage", "Staff instructions updated!");
         return "redirect:/kitchen-prep/" + id;
     }
 

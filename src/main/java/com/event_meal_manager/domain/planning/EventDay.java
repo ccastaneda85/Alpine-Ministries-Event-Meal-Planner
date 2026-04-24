@@ -32,11 +32,6 @@ public class EventDay {
     private String notes;
 
     @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "meal_plan_id")
-    private MealPlan mealPlan;
-
-    @JsonIgnore
     @OneToMany(mappedBy = "eventDay", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<MealPeriod> mealPeriods = new ArrayList<>();

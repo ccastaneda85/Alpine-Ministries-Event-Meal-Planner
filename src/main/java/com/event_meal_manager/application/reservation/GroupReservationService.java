@@ -6,6 +6,7 @@ import com.event_meal_manager.domain.planning.MealPeriodType;
 import com.event_meal_manager.domain.reservation.GroupMealAttendance;
 import com.event_meal_manager.domain.reservation.GroupReservation;
 import com.event_meal_manager.infrastructure.persistence.planning.EventDayRepository;
+import com.event_meal_manager.infrastructure.persistence.planning.MealPlanRepository;
 import com.event_meal_manager.infrastructure.persistence.reservation.GroupMealAttendanceRepository;
 import com.event_meal_manager.infrastructure.persistence.reservation.GroupReservationRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +27,7 @@ public class GroupReservationService {
     private final GroupReservationRepository groupReservationRepository;
     private final GroupMealAttendanceRepository groupMealAttendanceRepository;
     private final EventDayRepository eventDayRepository;
+    private final MealPlanRepository mealPlanRepository;
 
     public List<GroupReservation> findAll() {
         return groupReservationRepository.findAll();
@@ -93,8 +97,19 @@ public class GroupReservationService {
                 LocalDate date = a.getMealPeriod().getEventDay().getDate();
                 return date.isBefore(arrivalDate) || date.isAfter(departureDate);
             })
-            .collect(java.util.stream.Collectors.toList());
+            .collect(Collectors.toList());
+
+        Set<Long> removedEventDayIds = toDelete.stream()
+            .map(a -> a.getMealPeriod().getEventDay().getEventDayId())
+            .collect(Collectors.toSet());
+
         groupMealAttendanceRepository.deleteAll(toDelete);
+
+        for (Long eventDayId : removedEventDayIds) {
+            if (groupMealAttendanceRepository.findByMealPeriodEventDayEventDayId(eventDayId).isEmpty()) {
+                eventDayRepository.findById(eventDayId).ifPresent(eventDayRepository::delete);
+            }
+        }
 
         // Optionally reset counts on remaining records
         List<GroupMealAttendance> toKeep = attendances.stream()
@@ -102,7 +117,7 @@ public class GroupReservationService {
                 LocalDate date = a.getMealPeriod().getEventDay().getDate();
                 return !date.isBefore(arrivalDate) && !date.isAfter(departureDate);
             })
-            .collect(java.util.stream.Collectors.toList());
+            .collect(Collectors.toList());
         if (resetAttendance) {
             for (GroupMealAttendance a : toKeep) {
                 a.setAdultCount(defaultAdultCount);
@@ -122,16 +137,62 @@ public class GroupReservationService {
 
     @Transactional
     public void delete(Long id) {
+        GroupReservation reservation = groupReservationRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("GroupReservation not found: " + id));
+
+        List<EventDay> eventDaysToCheck = getDatesInRange(reservation.getArrivalDate(), reservation.getDepartureDate())
+            .stream()
+            .map(eventDayRepository::findFirstByDate)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toList());
+
         groupReservationRepository.deleteById(id);
+
+        for (EventDay eventDay : eventDaysToCheck) {
+            if (groupMealAttendanceRepository.findByMealPeriodEventDayEventDayId(eventDay.getEventDayId()).isEmpty()) {
+                eventDayRepository.delete(eventDay);
+            }
+        }
     }
+
+    @Transactional(readOnly = true)
+    public ReservationImpact getDeletionImpact(Long id) {
+        GroupReservation reservation = groupReservationRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("GroupReservation not found: " + id));
+
+        List<DateImpact> impacts = getDatesInRange(reservation.getArrivalDate(), reservation.getDepartureDate())
+            .stream()
+            .map(date -> computeDateImpact(date, id))
+            .collect(Collectors.toList());
+
+        return new ReservationImpact(impacts);
+    }
+
+    @Transactional(readOnly = true)
+    public ReservationImpact getShrinkImpact(Long id, LocalDate newStart, LocalDate newEnd) {
+        GroupReservation reservation = groupReservationRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("GroupReservation not found: " + id));
+
+        List<DateImpact> impacts = getDatesInRange(reservation.getArrivalDate(), reservation.getDepartureDate())
+            .stream()
+            .filter(date -> date.isBefore(newStart) || date.isAfter(newEnd))
+            .map(date -> computeDateImpact(date, id))
+            .collect(Collectors.toList());
+
+        return new ReservationImpact(impacts);
+    }
+
+    public record DateImpact(LocalDate date, boolean isLastGroup, boolean hasMealPlan, boolean hasKitchenPrepList) {}
+    public record ReservationImpact(List<DateImpact> affectedDates) {}
 
     private void initializeAttendanceForRange(GroupReservation reservation,
                                                LocalDate arrivalDate, LocalDate departureDate,
                                                List<GroupMealAttendance> existing) {
         // Collect meal period IDs that already have records so we don't duplicate
-        java.util.Set<Long> existingMealPeriodIds = existing.stream()
+        Set<Long> existingMealPeriodIds = existing.stream()
             .map(a -> a.getMealPeriod().getMealPeriodId())
-            .collect(java.util.stream.Collectors.toSet());
+            .collect(Collectors.toSet());
 
         LocalDate current = arrivalDate;
         while (!current.isAfter(departureDate)) {
@@ -181,6 +242,39 @@ public class GroupReservationService {
 
             current = current.plusDays(1);
         }
+    }
+
+    private List<LocalDate> getDatesInRange(LocalDate start, LocalDate end) {
+        List<LocalDate> dates = new ArrayList<>();
+        LocalDate current = start;
+        while (!current.isAfter(end)) {
+            dates.add(current);
+            current = current.plusDays(1);
+        }
+        return dates;
+    }
+
+    private DateImpact computeDateImpact(LocalDate date, Long excludeReservationId) {
+        Optional<EventDay> maybeEventDay = eventDayRepository.findFirstByDate(date);
+        if (maybeEventDay.isEmpty()) {
+            return new DateImpact(date, false, false, false);
+        }
+        EventDay eventDay = maybeEventDay.get();
+        List<GroupMealAttendance> allAttendance = groupMealAttendanceRepository
+            .findByMealPeriodEventDayEventDayId(eventDay.getEventDayId());
+        long otherGroupCount = allAttendance.stream()
+            .filter(a -> !a.getGroupReservation().getGroupReservationId().equals(excludeReservationId))
+            .map(a -> a.getGroupReservation().getGroupReservationId())
+            .distinct()
+            .count();
+        boolean hasMealPlan = mealPlanRepository
+            .existsByStartDateLessThanEqualAndEndDateGreaterThanEqual(date, date);
+        return new DateImpact(
+            date,
+            otherGroupCount == 0,
+            hasMealPlan,
+            eventDay.getKitchenPrepList() != null
+        );
     }
 
     private EventDay createEventDayWithMealPeriods(LocalDate date) {

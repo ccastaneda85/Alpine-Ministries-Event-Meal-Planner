@@ -38,9 +38,9 @@ public class KitchenPrepController {
         return ResponseEntity.status(HttpStatus.CREATED).body(prepList);
     }
 
-    @PatchMapping("/{id}/notes")
-    public ResponseEntity<KitchenPrepList> updateNotes(@PathVariable Long id, @RequestBody UpdateNotesRequest request) {
-        KitchenPrepList prepList = kitchenPrepService.updateNotes(id, request.notes());
+    @PatchMapping("/{id}/staff-instructions")
+    public ResponseEntity<KitchenPrepList> updateStaffInstructions(@PathVariable Long id, @RequestBody UpdateStaffInstructionsRequest request) {
+        KitchenPrepList prepList = kitchenPrepService.updateStaffInstructions(id, request.staffInstructions());
         return ResponseEntity.ok(prepList);
     }
 
@@ -74,6 +74,29 @@ public class KitchenPrepController {
         return ResponseEntity.ok(item);
     }
 
+    @PutMapping("/items/{itemId}")
+    public ResponseEntity<KitchenPrepListItem> updateItem(
+            @PathVariable Long itemId,
+            @RequestBody UpdateItemRequest request) {
+        KitchenPrepListItem item = kitchenPrepService.updateItem(
+            itemId,
+            request.menuItemName(),
+            request.adultServings(),
+            request.youthServings(),
+            request.kidServings(),
+            request.codeServings()
+        );
+        return ResponseEntity.ok(item);
+    }
+
+    @PatchMapping("/items/{itemId}/notes")
+    public ResponseEntity<KitchenPrepListItem> updateItemNotes(
+            @PathVariable Long itemId,
+            @RequestBody UpdateNotesRequest request) {
+        KitchenPrepListItem item = kitchenPrepService.updateItemNotes(itemId, request.notes());
+        return ResponseEntity.ok(item);
+    }
+
     @DeleteMapping("/items/{itemId}")
     public ResponseEntity<Void> deleteItem(@PathVariable Long itemId) {
         kitchenPrepService.deleteItem(itemId);
@@ -92,8 +115,17 @@ public class KitchenPrepController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePrepList(@PathVariable Long id) {
+        kitchenPrepService.deletePrepList(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    public record UpdateStaffInstructionsRequest(String staffInstructions) {}
     public record UpdateNotesRequest(String notes) {}
     public record AddItemRequest(String menuItemName, Integer adultServings, Integer youthServings,
                                   Integer kidServings, Integer codeServings, String notes, Long mealPeriodId) {}
+    public record UpdateItemRequest(String menuItemName, Integer adultServings, Integer youthServings,
+                                     Integer kidServings, Integer codeServings) {}
     public record UpdateStatusRequest(PrepItemStatus status) {}
 }

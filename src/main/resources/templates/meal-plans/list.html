@@ -69,7 +69,7 @@
                         <td th:text="${plan.name}"></td>
                         <td th:text="${#temporals.format(plan.startDate, 'MMM d, yyyy')}"></td>
                         <td th:text="${#temporals.format(plan.endDate, 'MMM d, yyyy')}"></td>
-                        <td th:text="${plan.eventDays.size()}"></td>
+                        <td th:text="${daysByPlanId[plan.mealPlanId]}"></td>
                         <td class="actions">
                             <a th:href="@{/meal-plans/{id}(id=${plan.mealPlanId})}" class="btn btn-sm btn-primary">View</a>
                             <a th:href="@{/meal-plans/{id}/edit(id=${plan.mealPlanId})}" class="btn btn-sm btn-secondary">Edit</a>

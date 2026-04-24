@@ -7,8 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "meal_plans")
@@ -30,8 +28,4 @@ public class MealPlan {
 
     @Column(nullable = false)
     private LocalDate endDate;
-
-    @OneToMany(mappedBy = "mealPlan", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<EventDay> eventDays = new ArrayList<>();
 }

@@ -27,8 +27,8 @@ public class KitchenPrepList {
     @JoinColumn(name = "event_day_id", nullable = false, unique = true)
     private EventDay eventDay;
 
-    @Column(columnDefinition = "TEXT")
-    private String notes;
+    @Column(name = "staff_instructions", columnDefinition = "TEXT")
+    private String staffInstructions;
 
     @JsonIgnore
     @OneToMany(mappedBy = "kitchenPrepList", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { ExternalLink } from 'lucide-react'
 import type { EventDay, MealPeriod, Menu, MenuItemSummary } from '../../types'
 import { api } from '../../services/api'
 
@@ -23,6 +22,7 @@ export default function MealsTab({ eventDay, mealPeriods, menus, onAssignMenu, o
   const [saving, setSaving] = useState<number | null>(null)
   const [changing, setChanging] = useState<Record<number, boolean>>({})
   const [menuItems, setMenuItems] = useState<Record<number, MenuItemSummary[]>>({})
+  const [clearConfirmId, setClearConfirmId] = useState<number | null>(null)
 
   // Fetch items for any assigned menus whenever mealPeriods changes
   useEffect(() => {
@@ -36,7 +36,7 @@ export default function MealsTab({ eventDay, mealPeriods, menus, onAssignMenu, o
   }, [mealPeriods])
 
   if (!eventDay) {
-    return <p className="empty-state">No event day configured for this date. Create a Meal Plan that includes this date to enable meal period management.</p>
+    return <p className="empty-state">No groups are scheduled for this date. Add a Group Reservation that includes this date to enable meal planning.</p>
   }
 
   async function handleAssign(period: MealPeriod) {
@@ -53,6 +53,11 @@ export default function MealsTab({ eventDay, mealPeriods, menus, onAssignMenu, o
   }
 
   async function handleClear(periodId: number) {
+    if (eventDay?.kitchenPrepList && clearConfirmId !== periodId) {
+      setClearConfirmId(periodId)
+      return
+    }
+    setClearConfirmId(null)
     setSaving(periodId)
     try {
       await onClearMenu(periodId)
@@ -98,27 +103,59 @@ export default function MealsTab({ eventDay, mealPeriods, menus, onAssignMenu, o
                       ))}
                     </ul>
                   )}
-                  <div className="meal-actions">
-                    <button
-                      type="button"
-                      className="btn-outline btn-sm"
-                      disabled={isSaving}
-                      onClick={() => setChanging(prev => ({ ...prev, [period.mealPeriodId]: true }))}
-                    >
-                      Change Menu
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-outline btn-sm"
-                      disabled={isSaving}
-                      onClick={() => handleClear(period.mealPeriodId)}
-                    >
-                      {isSaving ? 'Clearing...' : 'Clear'}
-                    </button>
-                  </div>
+                  {clearConfirmId === period.mealPeriodId && (
+                    <div className="meal-prep-warning">
+                      <strong>Kitchen Prep List exists.</strong> This event day already has a prep list built from the current menu. Clearing this menu won't update it — you'll need to regenerate the prep list manually.
+                      <div className="meal-actions" style={{ marginTop: 8 }}>
+                        <button
+                          type="button"
+                          className="btn-accent btn-sm"
+                          disabled={isSaving}
+                          onClick={() => handleClear(period.mealPeriodId)}
+                        >
+                          {isSaving ? 'Clearing...' : 'Clear Anyway'}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-outline btn-sm"
+                          onClick={() => setClearConfirmId(null)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {clearConfirmId !== period.mealPeriodId && (
+                    <div className="meal-actions">
+                      <button
+                        type="button"
+                        className="btn-outline btn-sm"
+                        disabled={isSaving}
+                        onClick={() => {
+                          setChanging(prev => ({ ...prev, [period.mealPeriodId]: true }))
+                          setClearConfirmId(null)
+                        }}
+                      >
+                        Change Menu
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-outline btn-sm"
+                        disabled={isSaving}
+                        onClick={() => handleClear(period.mealPeriodId)}
+                      >
+                        {isSaving ? 'Clearing...' : 'Clear'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <>
+                  {isChanging && eventDay?.kitchenPrepList && (
+                    <div className="meal-prep-warning">
+                      <strong>Kitchen Prep List exists.</strong> This event day already has a prep list built from the current menu. After assigning a new menu, go to the Kitchen Prep tab and regenerate the list to reflect the change.
+                    </div>
+                  )}
                   <select
                     className="meal-select"
                     value={pendingMenuId[period.mealPeriodId] ?? ''}
@@ -155,21 +192,7 @@ export default function MealsTab({ eventDay, mealPeriods, menus, onAssignMenu, o
         })}
       </div>
 
-      {eventDay.kitchenPrepList && (
-        <div className="kitchen-prep-section">
-          <p className="kitchen-prep-title">Kitchen Prep</p>
-          <div className="kitchen-prep-info">
-            <span>Prep List ID: {eventDay.kitchenPrepList.kitchenPrepListId}</span>
-            <a
-              href={`/kitchen-prep/${eventDay.kitchenPrepList.kitchenPrepListId}/view`}
-              className="btn-gold"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}
-            >
-              <ExternalLink size={13} /> View Prep List
-            </a>
-          </div>
-        </div>
-      )}
+
     </div>
   )
 }
