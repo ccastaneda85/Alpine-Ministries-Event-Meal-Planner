@@ -1,12 +1,13 @@
 import { NavLink } from 'react-router-dom'
-import { Calendar, ShoppingBasket, ChefHat, BookOpen, UserCircle } from 'lucide-react'
+import { Calendar, ShoppingBasket, ChefHat, BookOpen, UserCircle, Users } from 'lucide-react'
 import logo from '../../assets/AlpineMainLogo.png'
 
 const navItems = [
   { to: '/calendar', icon: Calendar, label: 'Calendar' },
   { to: '/purchasing', icon: ShoppingBasket, label: 'Purchasing' },
-  { to: '/kitchen-prep', icon: ChefHat, label: 'Kitchen Prep' },
   { to: '/catalog', icon: BookOpen, label: 'Menu Catalog' },
+  { to: '/groups', icon: Users, label: 'Groups' },
+  { to: '/kitchen-prep', icon: ChefHat, label: 'Kitchen Prep' },
 ]
 
 export default function Navbar() {

@@ -53,11 +53,23 @@ export default function CalendarView() {
   const [month, setMonth] = useState(initialMonth)
   const [selectedDate, setSelectedDate] = useState(initialDate)
 
-  // Consume the date param once applied, so future internal date changes don't fight with it.
+  // Consume date + tab query params on first load, then strip them.
   useEffect(() => {
-    if (dateParam) {
+    const tabParam = searchParams.get('tab')
+    if (tabParam === 'groups' || tabParam === 'meals' || tabParam === 'kitchen-prep') {
+      setActiveTab(tabParam)
+      // Give React a tick to render the selected tab, then scroll the detail panel into view.
+      setTimeout(() => {
+        document.getElementById('date-detail-panel')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      }, 80)
+    }
+    if (dateParam || tabParam) {
       const next = new URLSearchParams(searchParams)
       next.delete('date')
+      next.delete('tab')
       setSearchParams(next, { replace: true })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

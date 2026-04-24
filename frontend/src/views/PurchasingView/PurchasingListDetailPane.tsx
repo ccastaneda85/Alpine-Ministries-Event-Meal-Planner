@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Zap, XCircle, Plus, Trash2 } from 'lucide-react'
+import { Zap, XCircle, Plus, Trash2, Pencil, Check, X, StickyNote } from 'lucide-react'
 import type { MealPlanDetail, PurchaseList, PurchaseListItem } from '../../types'
 import { api } from '../../services/api'
 import AddCustomItemModal from './AddCustomItemModal'
 import AddFromCatalogModal from './AddFromCatalogModal'
+import ConfirmModal from '../CalendarView/ConfirmModal'
 
 function formatDate(iso: string): string {
   const [y, m, d] = iso.split('-').map(Number)
@@ -31,8 +32,8 @@ interface Props {
 }
 
 export default function PurchasingListDetailPane({ detail, loading, onViewDay, onViewGroup }: Props) {
-  const [groupsOpen, setGroupsOpen] = useState(true)
-  const [menusOpen, setMenusOpen] = useState(true)
+  const [groupsOpen, setGroupsOpen] = useState(false)
+  const [menusOpen, setMenusOpen] = useState(false)
 
   // Purchase list state
   const [purchaseList, setPurchaseList] = useState<PurchaseList | null>(null)
@@ -44,6 +45,21 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
   const [showAddModal, setShowAddModal] = useState(false)
   const [showCatalogModal, setShowCatalogModal] = useState(false)
   const [itemError, setItemError] = useState<string | null>(null)
+
+  // Inline row edit (name / quantity / uom)
+  type EditForm = { name: string; quantity: number; uom: string }
+  const [editingItemId, setEditingItemId] = useState<number | null>(null)
+  const [editForm, setEditForm] = useState<EditForm | null>(null)
+  const [savingEditId, setSavingEditId] = useState<number | null>(null)
+
+  // Notes row editor
+  const [editingNotesId, setEditingNotesId] = useState<number | null>(null)
+  const [editingNotesValue, setEditingNotesValue] = useState('')
+  const [savingNotesId, setSavingNotesId] = useState<number | null>(null)
+
+  // Two-step delete confirm
+  const [pendingDeleteItemId, setPendingDeleteItemId] = useState<number | null>(null)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   const groupsWithDiet = detail.attendingGroups.filter(
     g => g.defaultCustomDietCount > 0 && g.customDietNotes && g.customDietNotes.trim() !== ''
@@ -131,6 +147,7 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
 
   async function handleDeleteSingle(id: number) {
     setItemError(null)
+    setDeletingId(id)
     try {
       await api.deletePurchaseListItem(id)
       setSelectedItemIds(prev => {
@@ -141,6 +158,66 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
       await loadPurchaseList()
     } catch (err) {
       setItemError(extractApiErrorMessage(err))
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  function startEditRow(item: PurchaseListItem) {
+    setEditingItemId(item.purchaseListItemId)
+    setEditForm({ name: item.purchaseListItemName, quantity: item.quantity, uom: item.uom })
+    setEditingNotesId(null)
+  }
+
+  function cancelEditRow() {
+    setEditingItemId(null)
+    setEditForm(null)
+  }
+
+  async function saveEditRow(item: PurchaseListItem) {
+    if (!editForm) return
+    setSavingEditId(item.purchaseListItemId)
+    setItemError(null)
+    try {
+      const updated = await api.updatePurchaseListItem(item.purchaseListItemId, {
+        itemName: editForm.name,
+        quantity: editForm.quantity,
+        uom: editForm.uom,
+        notes: item.notes ?? null,
+      })
+      setItems(prev => prev.map(it => it.purchaseListItemId === item.purchaseListItemId ? updated : it))
+      setEditingItemId(null)
+      setEditForm(null)
+    } catch (err) {
+      setItemError(extractApiErrorMessage(err))
+    } finally {
+      setSavingEditId(null)
+    }
+  }
+
+  function openNotesEditor(item: PurchaseListItem) {
+    setEditingNotesId(item.purchaseListItemId)
+    setEditingNotesValue(item.notes ?? '')
+    setEditingItemId(null)
+    setEditForm(null)
+  }
+
+  async function saveNotes(item: PurchaseListItem) {
+    setSavingNotesId(item.purchaseListItemId)
+    setItemError(null)
+    try {
+      const updated = await api.updatePurchaseListItem(item.purchaseListItemId, {
+        itemName: item.purchaseListItemName,
+        quantity: item.quantity,
+        uom: item.uom,
+        notes: editingNotesValue,
+      })
+      setItems(prev => prev.map(it => it.purchaseListItemId === item.purchaseListItemId ? updated : it))
+      setEditingNotesId(null)
+    } catch (err) {
+      setItemError(extractApiErrorMessage(err))
+    } finally {
+      setSavingNotesId(null)
     }
   }
 
@@ -367,8 +444,7 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
       </div>
 
       {/* Purchase List Items */}
-      <section className="pdp-section">
-        <h2 className="pdp-section-title" style={{ marginBottom: 'var(--spacing-sm)' }}>Items</h2>
+      <section className="pdp-section pdp-items-section">
         {loadingItems ? (
           <p className="empty-state" style={{ textAlign: 'left' }}>Loading items...</p>
         ) : !hasItems ? (
@@ -394,7 +470,13 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
                     || (item.autoGenerated == null && item.ingredientId != null)
                   const isCatalog = !isGenerated && item.ingredientId != null
                   const isCustom = !isGenerated && item.ingredientId == null
+                  const isEditing = editingItemId === item.purchaseListItemId
+                  const isSavingEdit = savingEditId === item.purchaseListItemId
+                  const isEditingNotes = editingNotesId === item.purchaseListItemId
+                  const isSavingNotes = savingNotesId === item.purchaseListItemId
+                  const isDeleting = deletingId === item.purchaseListItemId
                   return (
+                  <>
                   <tr key={item.purchaseListItemId} className={item.checked ? 'pdp-item-checked' : undefined}>
                     <td className="pdp-col-check">
                       <input
@@ -405,30 +487,141 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
                       />
                     </td>
                     <td>
-                      <button
-                        type="button"
-                        className="pdp-item-name-btn"
-                        onClick={() => handleToggleChecked(item.purchaseListItemId)}
-                        title={item.checked ? 'Mark as not purchased' : 'Mark as purchased'}
-                      >
-                        {item.purchaseListItemName}
-                      </button>
-                      {isCustom && <span className="pdp-item-tag pdp-item-tag--custom">Custom</span>}
-                      {isCatalog && <span className="pdp-item-tag pdp-item-tag--added">Added</span>}
+                      {isEditing && editForm ? (
+                        <input
+                          className="kp-inline-input"
+                          style={{ width: 180, textAlign: 'left' }}
+                          value={editForm.name}
+                          onChange={e => setEditForm(f => f ? { ...f, name: e.target.value } : f)}
+                        />
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className="pdp-item-name-btn"
+                            onClick={() => handleToggleChecked(item.purchaseListItemId)}
+                            title={item.checked ? 'Mark as not purchased' : 'Mark as purchased'}
+                          >
+                            {item.purchaseListItemName}
+                          </button>
+                          {isCustom && <span className="pdp-item-tag pdp-item-tag--custom">Custom</span>}
+                          {isCatalog && <span className="pdp-item-tag pdp-item-tag--added">Added</span>}
+                        </>
+                      )}
                     </td>
-                    <td className="num">{item.quantity.toFixed(2)}</td>
-                    <td>{item.uom}</td>
+                    <td className="num">
+                      {isEditing && editForm ? (
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          className="kp-inline-input"
+                          value={editForm.quantity}
+                          onChange={e => setEditForm(f => f ? { ...f, quantity: +e.target.value } : f)}
+                        />
+                      ) : (
+                        item.quantity.toFixed(2)
+                      )}
+                    </td>
+                    <td>
+                      {isEditing && editForm ? (
+                        <input
+                          className="kp-inline-input"
+                          style={{ width: 70, textAlign: 'left' }}
+                          value={editForm.uom}
+                          onChange={e => setEditForm(f => f ? { ...f, uom: e.target.value } : f)}
+                        />
+                      ) : (
+                        item.uom
+                      )}
+                    </td>
                     <td>{item.notes ?? ''}</td>
                     <td className="col-actions">
-                      <button
-                        type="button"
-                        className="btn-danger btn-sm"
-                        onClick={() => handleDeleteSingle(item.purchaseListItemId)}
-                      >
-                        Delete
-                      </button>
+                      <div className="action-btns">
+                        {isEditing ? (
+                          <>
+                            <button
+                              type="button"
+                              className="kp-edit-btn"
+                              disabled={isSavingEdit}
+                              onClick={() => saveEditRow(item)}
+                              title="Save"
+                            >
+                              <Check size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              className="kp-edit-btn"
+                              onClick={cancelEditRow}
+                              title="Cancel"
+                            >
+                              <X size={14} />
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            className="kp-edit-btn"
+                            onClick={() => startEditRow(item)}
+                            title="Edit"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className={`kp-edit-btn${isEditingNotes ? ' active' : ''}`}
+                          style={item.notes ? { color: 'var(--color-primary)' } : undefined}
+                          onClick={() => isEditingNotes ? setEditingNotesId(null) : openNotesEditor(item)}
+                          title={item.notes ? 'Edit notes' : 'Add notes'}
+                        >
+                          <StickyNote size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          className="kp-del-btn"
+                          disabled={isDeleting}
+                          onClick={() => setPendingDeleteItemId(item.purchaseListItemId)}
+                          title="Delete item"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
+                  {isEditingNotes && (
+                    <tr className="kp-notes-editor-row">
+                      <td colSpan={6}>
+                        <div className="kp-notes-editor">
+                          <textarea
+                            className="kp-notes-textarea"
+                            placeholder="Add notes for this item..."
+                            value={editingNotesValue}
+                            onChange={e => setEditingNotesValue(e.target.value)}
+                            rows={2}
+                          />
+                          <div className="kp-notes-editor-actions">
+                            <button
+                              type="button"
+                              className="btn-gold btn-sm"
+                              disabled={isSavingNotes}
+                              onClick={() => saveNotes(item)}
+                            >
+                              {isSavingNotes ? 'Saving...' : 'Save Notes'}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-outline btn-sm"
+                              onClick={() => setEditingNotesId(null)}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  </>
                   )
                 })}
               </tbody>
@@ -448,6 +641,21 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
         <AddFromCatalogModal
           onClose={() => setShowCatalogModal(false)}
           onAdd={handleAddItem}
+        />
+      )}
+
+      {pendingDeleteItemId !== null && (
+        <ConfirmModal
+          title="Delete item?"
+          message="This will permanently remove this item from the purchase list."
+          confirmLabel={deletingId === pendingDeleteItemId ? 'Deleting...' : 'Delete'}
+          disabled={deletingId === pendingDeleteItemId}
+          onConfirm={async () => {
+            const id = pendingDeleteItemId
+            await handleDeleteSingle(id)
+            setPendingDeleteItemId(null)
+          }}
+          onCancel={() => setPendingDeleteItemId(null)}
         />
       )}
     </div>

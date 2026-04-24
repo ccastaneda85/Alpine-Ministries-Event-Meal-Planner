@@ -26,6 +26,9 @@ export const api = {
   getReservationsByRange: (start: string, end: string) =>
     fetchJson<GroupReservation[]>(`${BASE}/group-reservations/range?start=${start}&end=${end}`),
 
+  getAllReservations: () =>
+    fetchJson<GroupReservation[]>(`${BASE}/group-reservations`),
+
   getReservation: (id: number) => fetchJson<GroupReservation>(`${BASE}/group-reservations/${id}`),
 
   createReservation: (body: Omit<GroupReservation, 'groupReservationId'>) =>
@@ -103,6 +106,15 @@ export const api = {
     }),
   togglePurchaseListItem: (itemId: number) =>
     fetchJson<PurchaseListItem>(`${BASE}/purchase-list-items/${itemId}/toggle-checked`, { method: 'PATCH' }),
+  updatePurchaseListItem: (
+    itemId: number,
+    body: { itemName: string; quantity: number; uom: string; notes?: string | null },
+  ) =>
+    fetchJson<PurchaseListItem>(`${BASE}/purchase-list-items/${itemId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...body, notes: body.notes ?? null }),
+    }),
   deletePurchaseListItem: (itemId: number) =>
     fetchVoid(`${BASE}/purchase-list-items/${itemId}`, { method: 'DELETE' }),
 
@@ -115,6 +127,9 @@ export const api = {
 
   getEventDaysByRange: (start: string, end: string) =>
     fetchJson<EventDay[]>(`${BASE}/event-days/range?start=${start}&end=${end}`),
+
+  getAllEventDays: () =>
+    fetchJson<EventDay[]>(`${BASE}/event-days`),
 
   // Meal Periods
   getMealPeriodsByEventDay: (eventDayId: number) =>

@@ -5,6 +5,7 @@ import MealPlanView from './views/MealPlanView'
 import PurchasingView from './views/PurchasingView'
 import KitchenPrepView from './views/KitchenPrepView'
 import MenuCatalogView from './views/MenuCatalogView'
+import GroupsView from './views/GroupsView'
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
         <Route element={<AppShell />}>
           <Route index element={<Navigate to="/calendar" replace />} />
           <Route path="/calendar" element={<CalendarView />} />
+          <Route path="/groups" element={<GroupsView />} />
           <Route path="/meal-plan" element={<MealPlanView />} />
           <Route path="/purchasing" element={<PurchasingView />} />
           <Route path="/kitchen-prep" element={<KitchenPrepView />} />
