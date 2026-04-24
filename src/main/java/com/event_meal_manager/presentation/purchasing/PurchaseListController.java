@@ -1,6 +1,8 @@
 package com.event_meal_manager.presentation.purchasing;
 
 import com.event_meal_manager.application.purchasing.PurchaseListService;
+import com.event_meal_manager.application.vendor.VendorSuggestionService;
+import com.event_meal_manager.application.vendor.VendorSuggestionService.AnalyzeResult;
 import com.event_meal_manager.domain.purchasing.PurchaseList;
 import com.event_meal_manager.domain.purchasing.PurchaseListStatus;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,6 +20,7 @@ import java.util.List;
 public class PurchaseListController {
 
     private final PurchaseListService purchaseListService;
+    private final VendorSuggestionService vendorSuggestionService;
 
     @GetMapping
     public List<PurchaseListDTO> findAll() {
@@ -69,6 +73,18 @@ public class PurchaseListController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         purchaseListService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/analyze")
+    public ResponseEntity<AnalyzeResult> analyze(@PathVariable Long id)
+            throws IOException, InterruptedException {
+        AnalyzeResult result = vendorSuggestionService.analyzeAndApply(id);
+        return ResponseEntity.ok(result);
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<String> handleBadState(IllegalStateException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
     }
 
     private PurchaseListDTO toDTO(PurchaseList p) {

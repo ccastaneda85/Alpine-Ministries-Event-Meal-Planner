@@ -3016,6 +3016,127 @@ html, body, #root {
 
 .group-count-cell--total .group-count-value { color: var(--color-primary); }
 
+/* ===== VENDOR FILES ===== */
+.vendor-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.vendor-file-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: 12px 16px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.vendor-file-icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.vendor-file-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.vendor-file-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vendor-file-vendor {
+  font-weight: 600;
+}
+
+.vendor-file-meta {
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+  margin-top: 2px;
+}
+
+.vendor-file-actions {
+  flex-shrink: 0;
+}
+
+/* ===== ANALYZE WITH AI ===== */
+.pdp-analyze-btn {
+  color: var(--color-accent);
+  border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
+}
+
+.pdp-analyze-btn:hover:not(:disabled) {
+  background: #fdf3f1;
+  border-color: var(--color-accent);
+}
+
+.pdp-analyze-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pdp-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: pdp-spin 0.7s linear infinite;
+  vertical-align: -2px;
+  margin-right: 4px;
+}
+
+@keyframes pdp-spin {
+  to { transform: rotate(360deg); }
+}
+
+.pdp-analyze-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: var(--spacing-sm);
+  background: color-mix(in srgb, var(--color-accent) 7%, var(--color-white));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 30%, var(--color-border));
+  border-left: 3px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  color: var(--color-text);
+}
+
+.pdp-analyze-result svg {
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.pdp-analyze-result-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--color-text-light);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 0;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.pdp-analyze-result-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--color-text);
+}
+
 /* Kitchen prep list cards (reuses .group-card layout) */
 .kp-card-row {
   display: flex;

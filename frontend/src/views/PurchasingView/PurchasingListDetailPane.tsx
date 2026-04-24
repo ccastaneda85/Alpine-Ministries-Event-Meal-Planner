@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Zap, XCircle, Plus, Trash2, Pencil, Check, X, StickyNote, Printer } from 'lucide-react'
+import { Zap, XCircle, Plus, Trash2, Pencil, Check, X, StickyNote, Printer, Sparkles } from 'lucide-react'
 import type { MealPlanDetail, PurchaseList, PurchaseListItem } from '../../types'
 import { api } from '../../services/api'
 import alpineLogo from '../../assets/AlpineMainLogo.png'
@@ -70,6 +70,10 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
   // Two-step delete confirm
   const [pendingDeleteItemId, setPendingDeleteItemId] = useState<number | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+
+  // AI vendor analysis
+  const [analyzing, setAnalyzing] = useState(false)
+  const [analyzeResult, setAnalyzeResult] = useState<{ totalItems: number; itemsUpdated: number } | null>(null)
 
   const groupsWithDiet = detail.attendingGroups.filter(
     g => g.defaultCustomDietCount > 0 && g.customDietNotes && g.customDietNotes.trim() !== ''
@@ -216,6 +220,22 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
       setItemError(extractApiErrorMessage(err))
     } finally {
       setSavingEditId(null)
+    }
+  }
+
+  async function handleAnalyze() {
+    if (!purchaseList) return
+    setAnalyzing(true)
+    setItemError(null)
+    setAnalyzeResult(null)
+    try {
+      const result = await api.analyzePurchaseList(purchaseList.purchaseListId)
+      setAnalyzeResult({ totalItems: result.totalItems, itemsUpdated: result.itemsUpdated })
+      await loadPurchaseList()
+    } catch (err) {
+      setItemError(extractApiErrorMessage(err))
+    } finally {
+      setAnalyzing(false)
     }
   }
 
@@ -446,6 +466,18 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
         </button>
         <button
           type="button"
+          className="btn-outline btn-sm pdp-action-btn pdp-analyze-btn"
+          disabled={analyzing || !hasItems}
+          onClick={handleAnalyze}
+          title="Use AI to match items to uploaded vendor CSVs"
+        >
+          {analyzing
+            ? <><span className="pdp-spinner" aria-hidden="true" /> Analyzing…</>
+            : <><Sparkles size={13} /> Analyze with AI</>
+          }
+        </button>
+        <button
+          type="button"
           className="btn-outline btn-sm pdp-action-btn pdp-delete-selected-btn"
           disabled={selectedItemIds.size === 0}
           onClick={handleDeleteSelected}
@@ -455,6 +487,19 @@ export default function PurchasingListDetailPane({ detail, loading, onViewDay, o
           {selectedItemIds.size > 0 && <span className="pdp-sel-count"> ({selectedItemIds.size})</span>}
         </button>
       </div>
+
+      {analyzeResult && (
+        <div className="pdp-analyze-result" role="status">
+          <Sparkles size={14} />
+          <span>
+            AI analysis complete — filled {analyzeResult.itemsUpdated} of {analyzeResult.totalItems} item{analyzeResult.totalItems === 1 ? '' : 's'}.
+            Review the Vendor / Vendor Item # / Status columns and adjust anything that looks off.
+          </span>
+          <button type="button" className="pdp-analyze-result-close" onClick={() => setAnalyzeResult(null)} aria-label="Dismiss">
+            <X size={13} />
+          </button>
+        </div>
+      )}
 
       {itemError && (
         <p className="field-error" style={{ margin: '0 0 var(--spacing-md)' }}>{itemError}</p>

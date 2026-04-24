@@ -88,6 +88,12 @@ export const api = {
   deletePurchaseList: (id: number) =>
     fetchVoid(`${BASE}/purchase-lists/${id}`, { method: 'DELETE' }),
 
+  analyzePurchaseList: (id: number) =>
+    fetchJson<{ totalItems: number; itemsUpdated: number; modelResponse: string }>(
+      `${BASE}/purchase-lists/${id}/analyze`,
+      { method: 'POST' },
+    ),
+
   // Purchase List Items
   getPurchaseListItems: (purchaseListId: number) =>
     fetchJson<PurchaseListItem[]>(`${BASE}/purchase-list-items/purchase-list/${purchaseListId}`),
@@ -331,6 +337,23 @@ export const api = {
   clearGeneratedItems: (id: number) =>
     fetchVoid(`${BASE}/kitchen-prep/${id}/clear-generated`, { method: 'POST' }),
 
+  // Vendor files
+  listVendorFiles: () =>
+    fetchJson<VendorFileInfo[]>(`${BASE}/vendor-files`),
+  uploadVendorFile: async (vendor: string, file: File): Promise<VendorFileInfo> => {
+    const form = new FormData()
+    form.append('vendor', vendor)
+    form.append('file', file)
+    const res = await fetch(`${BASE}/vendor-files`, { method: 'POST', body: form })
+    if (!res.ok) {
+      const body = await res.text().catch(() => '')
+      throw new Error(`${res.status}: ${body.slice(0, 300)}`)
+    }
+    return res.json() as Promise<VendorFileInfo>
+  },
+  deleteVendorFile: (name: string) =>
+    fetchVoid(`${BASE}/vendor-files/${encodeURIComponent(name)}`, { method: 'DELETE' }),
+
   // Preview which prep lists / purchase lists overlap a prospective reservation.
   // Any overlap means the user should regenerate those lists after the group is added.
   getReservationRangeImpact: async (start: string, end: string): Promise<ReservationRangeImpact> => {
@@ -411,4 +434,12 @@ export interface PurchaseListImpact {
 export interface ReservationRangeImpact {
   prepLists: PrepListImpact[]
   purchaseLists: PurchaseListImpact[]
+}
+
+export interface VendorFileInfo {
+  name: string
+  vendor: string | null
+  originalName: string
+  size: number
+  lastModified: number
 }

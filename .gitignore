@@ -4,6 +4,13 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+# Vendor CSV uploads (runtime data, not source)
+vendor-files/
+
+# Local secrets
+.env
+application-local.properties
+
 ### STS ###
 .apt_generated
 .classpath

@@ -6,6 +6,7 @@ import PurchasingView from './views/PurchasingView'
 import KitchenPrepView from './views/KitchenPrepView'
 import MenuCatalogView from './views/MenuCatalogView'
 import GroupsView from './views/GroupsView'
+import VendorsView from './views/VendorsView'
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="/purchasing" element={<PurchasingView />} />
           <Route path="/kitchen-prep" element={<KitchenPrepView />} />
           <Route path="/catalog" element={<MenuCatalogView />} />
+          <Route path="/vendors" element={<VendorsView />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -103,3 +103,6 @@ All configuration is in `src/main/resources/application.properties`. Key setting
 | `spring.datasource.url` | `jdbc:sqlite:./data/eventdb.sqlite` | Database file path |
 | `spring.jpa.hibernate.ddl-auto` | `update` | Auto-manage schema from entities |
 | `server.port` | `8080` | HTTP port (Spring Boot default) |
+
+
+set -a && source .env && set +a && ./mvnw spring-boot:run
