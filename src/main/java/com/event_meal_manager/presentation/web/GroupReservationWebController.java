@@ -81,13 +81,13 @@ public class GroupReservationWebController {
                          @RequestParam int defaultKidCount,
                          @RequestParam int defaultCodeCount,
                          @RequestParam int defaultCustomDietCount,
-                         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate arrivalDate,
-                         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate departureDate,
+                         @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate arrivalDate,
+                         @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate departureDate,
                          @RequestParam(required = false) String customDietNotes,
                          @RequestParam(required = false) String notes,
                          RedirectAttributes redirectAttributes) {
         groupReservationService.update(id, groupName, defaultAdultCount, defaultYouthCount,
-            defaultKidCount, defaultCodeCount, defaultCustomDietCount, arrivalDate, departureDate, customDietNotes, notes);
+            defaultKidCount, defaultCodeCount, defaultCustomDietCount, arrivalDate, departureDate, customDietNotes, notes, false);
         redirectAttributes.addFlashAttribute("successMessage", "Reservation updated successfully!");
         return "redirect:/group-reservations/" + id;
     }

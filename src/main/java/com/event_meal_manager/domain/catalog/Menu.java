@@ -1,5 +1,6 @@
 package com.event_meal_manager.domain.catalog;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,6 +25,7 @@ public class Menu {
     @Column(nullable = false)
     private String menuName;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "menu", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<MenuEntry> menuEntries = new ArrayList<>();

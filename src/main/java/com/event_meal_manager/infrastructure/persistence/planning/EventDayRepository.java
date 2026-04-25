@@ -17,10 +17,4 @@ public interface EventDayRepository extends JpaRepository<EventDay, Long> {
     Optional<EventDay> findFirstByDate(LocalDate date);
 
     List<EventDay> findByDateBetween(LocalDate start, LocalDate end);
-
-    List<EventDay> findByMealPlanMealPlanId(Long mealPlanId);
-
-    @Query("SELECT ed FROM EventDay ed WHERE ed.mealPlan IS NULL AND NOT EXISTS (" +
-           "SELECT gma FROM GroupMealAttendance gma WHERE gma.mealPeriod.eventDay = ed)")
-    List<EventDay> findOrphanedEventDays();
 }

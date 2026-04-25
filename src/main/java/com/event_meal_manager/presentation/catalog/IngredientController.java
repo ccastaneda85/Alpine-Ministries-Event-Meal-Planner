@@ -17,38 +17,52 @@ public class IngredientController {
     private final IngredientService ingredientService;
 
     @GetMapping
-    public List<Ingredient> findAll() {
-        return ingredientService.findAll();
+    public List<IngredientDTO> findAll() {
+        return ingredientService.findAll().stream().map(this::toDTO).toList();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Ingredient> findById(@PathVariable Long id) {
+    public ResponseEntity<IngredientDTO> findById(@PathVariable Long id) {
         return ingredientService.findById(id)
-            .map(ResponseEntity::ok)
+            .map(i -> ResponseEntity.ok(toDTO(i)))
             .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/search")
-    public List<Ingredient> search(@RequestParam String name) {
-        return ingredientService.search(name);
+    public List<IngredientDTO> search(@RequestParam String name) {
+        return ingredientService.search(name).stream().map(this::toDTO).toList();
     }
 
     @PostMapping
-    public ResponseEntity<Ingredient> create(@RequestBody CreateIngredientRequest request) {
+    public ResponseEntity<IngredientDTO> create(@RequestBody CreateIngredientRequest request) {
         Ingredient ingredient = ingredientService.create(request.ingredientName(), request.unitOfMeasure());
-        return ResponseEntity.status(HttpStatus.CREATED).body(ingredient);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toDTO(ingredient));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Ingredient> update(@PathVariable Long id, @RequestBody UpdateIngredientRequest request) {
-        Ingredient ingredient = ingredientService.update(id, request.ingredientName(), request.unitOfMeasure());
-        return ResponseEntity.ok(ingredient);
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody UpdateIngredientRequest request) {
+        try {
+            Ingredient ingredient = ingredientService.update(id, request.ingredientName(), request.unitOfMeasure());
+            return ResponseEntity.ok(toDTO(ingredient));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
 
+    private IngredientDTO toDTO(Ingredient i) {
+        return new IngredientDTO(i.getIngredientId(), i.getIngredientName(), i.getUnitOfMeasure());
+    }
+
+    public record IngredientDTO(Long ingredientId, String ingredientName, String unitOfMeasure) {}
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        ingredientService.delete(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<String> delete(@PathVariable Long id) {
+        try {
+            ingredientService.delete(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
 
     public record CreateIngredientRequest(String ingredientName, String unitOfMeasure) {}

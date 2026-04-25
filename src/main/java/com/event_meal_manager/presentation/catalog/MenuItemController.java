@@ -17,9 +17,13 @@ public class MenuItemController {
 
     private final MenuItemService menuItemService;
 
+    public record MenuItemSummaryDTO(Long menuItemId, String menuItemName, Integer displayOrder) {}
+
     @GetMapping
-    public List<MenuItem> findAll() {
-        return menuItemService.findAll();
+    public List<MenuItemSummaryDTO> findAll() {
+        return menuItemService.findAll().stream()
+            .map(i -> new MenuItemSummaryDTO(i.getMenuItemId(), i.getMenuItemName(), null))
+            .toList();
     }
 
     @GetMapping("/{id}")
@@ -51,9 +55,13 @@ public class MenuItemController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        menuItemService.delete(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<String> delete(@PathVariable Long id) {
+        try {
+            menuItemService.delete(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
 
     public record CreateMenuItemRequest(String menuItemName) {}

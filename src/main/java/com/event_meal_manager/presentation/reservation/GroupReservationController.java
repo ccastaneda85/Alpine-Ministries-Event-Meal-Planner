@@ -67,9 +67,23 @@ public class GroupReservationController {
             request.arrivalDate(),
             request.departureDate(),
             request.customDietNotes(),
-            request.notes()
+            request.notes(),
+            request.resetAttendance()
         );
         return ResponseEntity.ok(reservation);
+    }
+
+    @GetMapping("/{id}/deletion-impact")
+    public ResponseEntity<GroupReservationService.ReservationImpact> getDeletionImpact(@PathVariable Long id) {
+        return ResponseEntity.ok(groupReservationService.getDeletionImpact(id));
+    }
+
+    @GetMapping("/{id}/shrink-impact")
+    public ResponseEntity<GroupReservationService.ReservationImpact> getShrinkImpact(
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate newStart,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate newEnd) {
+        return ResponseEntity.ok(groupReservationService.getShrinkImpact(id, newStart, newEnd));
     }
 
     @DeleteMapping("/{id}")
@@ -101,6 +115,7 @@ public class GroupReservationController {
         LocalDate arrivalDate,
         LocalDate departureDate,
         String customDietNotes,
-        String notes
+        String notes,
+        boolean resetAttendance
     ) {}
 }

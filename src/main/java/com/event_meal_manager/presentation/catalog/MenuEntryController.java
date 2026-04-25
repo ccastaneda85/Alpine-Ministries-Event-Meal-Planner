@@ -17,9 +17,11 @@ public class MenuEntryController {
     private final MenuEntryService menuEntryService;
 
     @GetMapping("/menu/{menuId}")
-    public List<MenuEntry> findByMenuId(@PathVariable Long menuId) {
-        return menuEntryService.findByMenuId(menuId);
+    public List<MenuEntryDTO> findByMenuId(@PathVariable Long menuId) {
+        return menuEntryService.findByMenuId(menuId).stream().map(this::toDTO).toList();
     }
+
+    public record MenuEntryDTO(Long menuEntryId, Long menuItemId, String menuItemName, Integer displayOrder) {}
 
     @GetMapping("/{id}")
     public ResponseEntity<MenuEntry> findById(@PathVariable Long id) {
@@ -29,21 +31,30 @@ public class MenuEntryController {
     }
 
     @PostMapping
-    public ResponseEntity<MenuEntry> create(@RequestBody CreateMenuEntryRequest request) {
+    public ResponseEntity<MenuEntryDTO> create(@RequestBody CreateMenuEntryRequest request) {
         MenuEntry entry = menuEntryService.addMenuItemToMenu(
             request.menuId(),
             request.menuItemId(),
             request.displayOrder()
         );
-        return ResponseEntity.status(HttpStatus.CREATED).body(entry);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toDTO(entry));
     }
 
     @PatchMapping("/{id}/display-order")
-    public ResponseEntity<MenuEntry> updateDisplayOrder(
+    public ResponseEntity<MenuEntryDTO> updateDisplayOrder(
             @PathVariable Long id,
             @RequestBody UpdateDisplayOrderRequest request) {
         MenuEntry entry = menuEntryService.updateDisplayOrder(id, request.displayOrder());
-        return ResponseEntity.ok(entry);
+        return ResponseEntity.ok(toDTO(entry));
+    }
+
+    private MenuEntryDTO toDTO(MenuEntry e) {
+        return new MenuEntryDTO(
+            e.getMenuEntryId(),
+            e.getMenuItem().getMenuItemId(),
+            e.getMenuItem().getMenuItemName(),
+            e.getDisplayOrder()
+        );
     }
 
     @DeleteMapping("/{id}")

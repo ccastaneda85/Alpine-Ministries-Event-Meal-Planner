@@ -1,5 +1,6 @@
 package com.event_meal_manager.domain.reservation;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -52,6 +53,7 @@ public class GroupReservation {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "groupReservation", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<GroupMealAttendance> groupMealAttendances = new ArrayList<>();

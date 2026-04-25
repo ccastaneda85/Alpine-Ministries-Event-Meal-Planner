@@ -1,6 +1,8 @@
 package com.event_meal_manager.application.catalog;
 
+import com.event_meal_manager.domain.catalog.MenuEntry;
 import com.event_meal_manager.domain.catalog.MenuItem;
+import com.event_meal_manager.infrastructure.persistence.catalog.MenuEntryRepository;
 import com.event_meal_manager.infrastructure.persistence.catalog.MenuItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -9,12 +11,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class MenuItemService {
 
     private final MenuItemRepository menuItemRepository;
+    private final MenuEntryRepository menuEntryRepository;
 
     public List<MenuItem> findAll() {
         return menuItemRepository.findAll();
@@ -50,6 +54,18 @@ public class MenuItemService {
 
     @Transactional
     public void delete(Long id) {
+        List<MenuEntry> usages = menuEntryRepository.findByMenuItemMenuItemId(id);
+        if (!usages.isEmpty()) {
+            String names = usages.stream()
+                .map(e -> e.getMenu().getMenuName())
+                .distinct()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .collect(Collectors.joining(", "));
+            throw new IllegalStateException(
+                "Cannot delete: menu item is used in the following menu(s): " + names
+                + ". Remove it from those menus first."
+            );
+        }
         menuItemRepository.deleteById(id);
     }
 }

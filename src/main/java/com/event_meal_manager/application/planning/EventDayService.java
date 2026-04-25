@@ -3,9 +3,11 @@ package com.event_meal_manager.application.planning;
 import com.event_meal_manager.domain.planning.EventDay;
 import com.event_meal_manager.domain.planning.MealPeriod;
 import com.event_meal_manager.domain.planning.MealPeriodType;
+import com.event_meal_manager.domain.planning.MealPlan;
 import com.event_meal_manager.domain.reservation.GroupMealAttendance;
 import com.event_meal_manager.domain.reservation.GroupReservation;
 import com.event_meal_manager.infrastructure.persistence.planning.EventDayRepository;
+import com.event_meal_manager.infrastructure.persistence.planning.MealPlanRepository;
 import com.event_meal_manager.infrastructure.persistence.reservation.GroupMealAttendanceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ public class EventDayService {
 
     private final EventDayRepository eventDayRepository;
     private final GroupMealAttendanceRepository groupMealAttendanceRepository;
+    private final MealPlanRepository mealPlanRepository;
 
     public List<EventDay> findAll() {
         return eventDayRepository.findAll();
@@ -46,7 +49,33 @@ public class EventDayService {
     }
 
     public List<EventDay> findByMealPlanId(Long mealPlanId) {
-        return eventDayRepository.findByMealPlanMealPlanId(mealPlanId);
+        MealPlan mealPlan = mealPlanRepository.findById(mealPlanId)
+            .orElseThrow(() -> new IllegalArgumentException("MealPlan not found: " + mealPlanId));
+        return eventDayRepository.findByDateBetween(mealPlan.getStartDate(), mealPlan.getEndDate());
+    }
+
+    @Transactional(readOnly = true)
+    public List<DayStatus> getDayStatus(Long mealPlanId) {
+        MealPlan mealPlan = mealPlanRepository.findById(mealPlanId)
+            .orElseThrow(() -> new IllegalArgumentException("MealPlan not found: " + mealPlanId));
+
+        List<DayStatus> status = new ArrayList<>();
+        LocalDate current = mealPlan.getStartDate();
+        while (!current.isAfter(mealPlan.getEndDate())) {
+            Optional<EventDay> eventDay = eventDayRepository.findFirstByDate(current);
+            int groupCount = 0;
+            if (eventDay.isPresent()) {
+                groupCount = (int) groupMealAttendanceRepository
+                    .findByMealPeriodEventDayEventDayId(eventDay.get().getEventDayId())
+                    .stream()
+                    .map(a -> a.getGroupReservation().getGroupReservationId())
+                    .distinct()
+                    .count();
+            }
+            status.add(new DayStatus(current, eventDay.isPresent(), groupCount));
+            current = current.plusDays(1);
+        }
+        return status;
     }
 
     @Transactional
@@ -119,4 +148,5 @@ public class EventDayService {
     }
 
     public record EventDayWithGroups(EventDay eventDay, List<GroupReservation> groups) {}
+    public record DayStatus(LocalDate date, boolean hasEventDay, int groupCount) {}
 }

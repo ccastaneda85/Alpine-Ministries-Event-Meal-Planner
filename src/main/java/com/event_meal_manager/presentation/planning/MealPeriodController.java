@@ -3,6 +3,8 @@ package com.event_meal_manager.presentation.planning;
 import com.event_meal_manager.application.planning.MealPeriodService;
 import com.event_meal_manager.domain.planning.MealPeriod;
 import com.event_meal_manager.domain.planning.MealPeriodType;
+import com.event_meal_manager.domain.services.AttendanceTotalsCalculator;
+import com.event_meal_manager.infrastructure.persistence.reservation.GroupMealAttendanceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,8 @@ import java.util.List;
 public class MealPeriodController {
 
     private final MealPeriodService mealPeriodService;
+    private final GroupMealAttendanceRepository groupMealAttendanceRepository;
+    private final AttendanceTotalsCalculator attendanceTotalsCalculator;
 
     @GetMapping
     public List<MealPeriod> findAll() {
@@ -54,5 +58,48 @@ public class MealPeriodController {
         return ResponseEntity.ok(mealPeriod);
     }
 
+    @GetMapping("/{id}/group-attendances")
+    public List<GroupAttendanceDTO> getGroupAttendances(@PathVariable Long id) {
+        return groupMealAttendanceRepository.findByMealPeriodMealPeriodId(id).stream()
+            .map(a -> new GroupAttendanceDTO(
+                a.getGroupReservation().getGroupName(),
+                a.getAdultCount(),
+                a.getYouthCount(),
+                a.getKidCount(),
+                a.getCodeCount(),
+                a.getCustomDietCount(),
+                a.getGroupReservation().getCustomDietNotes()
+            ))
+            .toList();
+    }
+
+    @GetMapping("/{id}/attendance-totals")
+    public ResponseEntity<AttendanceTotalsResponse> getAttendanceTotalsForPeriod(@PathVariable Long id) {
+        var attendances = groupMealAttendanceRepository.findByMealPeriodMealPeriodId(id);
+        var totals = attendanceTotalsCalculator.calculateTotals(attendances);
+        return ResponseEntity.ok(new AttendanceTotalsResponse(
+            totals.adultCount(), totals.youthCount(), totals.kidCount(), totals.codeCount()
+        ));
+    }
+
+    @GetMapping("/event-day/{eventDayId}/attendance-totals")
+    public AttendanceTotalsResponse getAttendanceTotalsForDay(@PathVariable Long eventDayId) {
+        var attendances = groupMealAttendanceRepository.findByMealPeriodEventDayEventDayId(eventDayId);
+        var totals = attendanceTotalsCalculator.calculateTotals(attendances);
+        return new AttendanceTotalsResponse(
+            totals.adultCount(), totals.youthCount(), totals.kidCount(), totals.codeCount()
+        );
+    }
+
     public record AssignMenuRequest(Long menuId) {}
+    public record AttendanceTotalsResponse(int adultCount, int youthCount, int kidCount, int codeCount) {}
+    public record GroupAttendanceDTO(
+        String groupName,
+        int adultCount,
+        int youthCount,
+        int kidCount,
+        int codeCount,
+        int customDietCount,
+        String customDietNotes
+    ) {}
 }

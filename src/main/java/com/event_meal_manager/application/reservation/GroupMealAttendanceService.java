@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,5 +45,12 @@ public class GroupMealAttendanceService {
         attendance.setCustomDietCount(customDietCount);
 
         return groupMealAttendanceRepository.save(attendance);
+    }
+
+    @Transactional
+    public void deleteByGroupAndDate(Long groupReservationId, LocalDate date) {
+        List<GroupMealAttendance> records = groupMealAttendanceRepository
+            .findByGroupReservationGroupReservationIdAndMealPeriodEventDayDate(groupReservationId, date);
+        groupMealAttendanceRepository.deleteAll(records);
     }
 }

@@ -52,7 +52,7 @@
         <div class="card mb-2">
             <p><strong>Start Date:</strong> <span th:text="${#temporals.format(mealPlan.startDate, 'EEEE, MMMM d, yyyy')}"></span></p>
             <p><strong>End Date:</strong> <span th:text="${#temporals.format(mealPlan.endDate, 'EEEE, MMMM d, yyyy')}"></span></p>
-            <p><strong>Total Days:</strong> <span th:text="${mealPlan.eventDays.size()}"></span></p>
+            <p><strong>Total Days:</strong> <span th:text="${totalDays}"></span></p>
         </div>
 
         <h2 class="mb-1">Attending Groups (<span th:text="${attendingGroups.size()}"></span>)</h2>
@@ -135,7 +135,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr th:each="day : ${mealPlan.eventDays}">
+                    <tr th:each="day : ${eventDays}">
                         <td th:text="${#temporals.format(day.date, 'EEE, MMM d')}"></td>
                         <td th:each="period : ${day.mealPeriods}" th:if="${period.mealPeriodType.name() == 'BREAKFAST'}">
                             <span th:if="${period.menu != null}" th:text="${period.menu.menuName}"></span>

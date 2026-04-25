@@ -1,5 +1,6 @@
 package com.event_meal_manager.domain.planning;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,13 +22,15 @@ public class KitchenPrepList {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long kitchenPrepListId;
 
+    @JsonIgnore
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_day_id", nullable = false, unique = true)
     private EventDay eventDay;
 
-    @Column(columnDefinition = "TEXT")
-    private String notes;
+    @Column(name = "staff_instructions", columnDefinition = "TEXT")
+    private String staffInstructions;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "kitchenPrepList", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<KitchenPrepListItem> items = new ArrayList<>();
