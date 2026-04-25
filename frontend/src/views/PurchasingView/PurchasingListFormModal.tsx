@@ -14,7 +14,7 @@ interface Props {
   defaultStartDate?: string
   defaultEndDate?: string
   onClose: () => void
-  onSaved: () => void
+  onSaved: (saved: MealPlan) => void
 }
 
 export default function PurchasingListFormModal({ editing, defaultStartDate, defaultEndDate, onClose, onSaved }: Props) {
@@ -33,12 +33,10 @@ export default function PurchasingListFormModal({ editing, defaultStartDate, def
     setSaving(true)
     setError(null)
     try {
-      if (isEdit && editing) {
-        await api.updateMealPlan(editing.mealPlanId, name.trim(), startDate, endDate)
-      } else {
-        await api.createMealPlan(name.trim(), startDate, endDate)
-      }
-      onSaved()
+      const saved = isEdit && editing
+        ? await api.updateMealPlan(editing.mealPlanId, name.trim(), startDate, endDate)
+        : await api.createMealPlan(name.trim(), startDate, endDate)
+      onSaved(saved)
     } catch (err) {
       setError(extractApiErrorMessage(err))
     } finally {

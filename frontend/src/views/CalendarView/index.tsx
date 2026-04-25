@@ -307,7 +307,10 @@ export default function CalendarView() {
           defaultStartDate={mealPlanDefaults.start}
           defaultEndDate={mealPlanDefaults.end}
           onClose={() => setMealPlanDefaults(null)}
-          onSaved={() => { setMealPlanDefaults(null); navigate('/purchasing') }}
+          onSaved={saved => {
+            setMealPlanDefaults(null)
+            navigate(`/purchasing?mealPlanId=${saved.mealPlanId}`)
+          }}
         />
       )}
       {rangeChoice && (

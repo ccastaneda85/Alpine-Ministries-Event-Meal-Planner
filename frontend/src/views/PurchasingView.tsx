@@ -166,13 +166,19 @@ export default function PurchasingView() {
     setShowFormModal(true)
   }
 
-  function handleFormSaved() {
+  function handleFormSaved(saved: MealPlan) {
+    const wasEditing = editingPlan !== null
     setShowFormModal(false)
     setEditingPlan(null)
     loadPlans()
-    // If the edited plan is currently open in the detail pane, refresh it.
-    if (selectedId !== null) {
-      api.getMealPlanDetail(selectedId).then(setDetail).catch(() => {})
+    if (wasEditing) {
+      // If the edited plan is currently open in the detail pane, refresh it.
+      if (selectedId !== null) {
+        api.getMealPlanDetail(selectedId).then(setDetail).catch(() => {})
+      }
+    } else {
+      // Newly created — open it in the detail pane.
+      setSelectedId(saved.mealPlanId)
     }
   }
 
